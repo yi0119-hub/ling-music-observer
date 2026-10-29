@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#121422" />
+  <meta name="theme-color" content="#191324" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="玲的音樂觀察室" />
@@ -20,14 +20,28 @@
 <body>
   <div class="app-shell">
     <header class="site-header">
-      <div class="brand-icon" aria-hidden="true">♫</div>
+      <div class="brand-icon" aria-hidden="true">☾</div>
       <div>
-        <p class="eyebrow">LING'S MUSIC CORNER</p>
+        <p class="eyebrow">LING'S LITTLE ROOM</p>
         <h1>玲的音樂觀察室</h1>
-        <p class="header-subtitle">讓音樂與日常，有個舒服的小角落</p>
+        <p class="header-subtitle">一間留給音樂與聊天的小房間</p>
       </div>
       <div class="live-indicator" id="liveBadge">未連線</div>
     </header>
+
+    <aside class="room-welcome" aria-label="玲的小房間歡迎區">
+      <div class="room-welcome-copy">
+        <p class="eyebrow">WELCOME IN · MAKE YOURSELF AT HOME</p>
+        <h2>歡迎回到玲的小房間</h2>
+        <p>窗邊留了一盞燈。想聽歌、說說話，都可以慢慢來。</p>
+        <span class="room-signature">Ling's little room <span aria-hidden="true">✦</span></span>
+      </div>
+      <div class="room-scene" aria-hidden="true">
+        <div class="room-window"><span class="room-moon"></span><span class="room-star room-star-one">✦</span><span class="room-star room-star-two">✧</span></div>
+        <div class="room-lamp"><span class="room-lamp-glow"></span><span class="room-lamp-shade"></span><span class="room-lamp-neck"></span><span class="room-lamp-base"></span></div>
+        <div class="room-desk"><span class="room-desk-record"></span><span class="room-desk-mug"></span></div>
+      </div>
+    </aside>
 
     <main>
       <nav class="tab-nav" role="tablist" aria-label="音樂觀察室主選單">
@@ -38,12 +52,12 @@
 
       <section id="panel-music" class="tab-panel music-layout" role="tabpanel" aria-labelledby="tab-music" tabindex="0">
         <div class="panel-intro">
-          <p class="eyebrow">YOUR MUSIC SPACE</p>
-          <h2>現在想聽點什麼？</h2>
-          <p>看看正在播放的旋律，還有剛剛聽過的歌。</p>
+          <p class="eyebrow">THE RECORD CORNER · 唱片角落</p>
+          <h2>窗邊的唱片角落</h2>
+          <p>現在播放的歌，和剛剛飄過房間的旋律，都放在這裡。</p>
         </div>
       <section class="hero">
-        <p class="eyebrow">NOW PLAYING · 正在播放</p>
+        <p class="eyebrow">ON THE TURNTABLE · 目前播放</p>
         <div class="song-area">
           <div class="album-frame" id="albumFrame">
             <img id="cover" alt="" hidden />
@@ -73,7 +87,7 @@
       </section>
       <section class="recent-card" aria-labelledby="recentTitle">
         <div class="section-heading">
-          <h2 id="recentTitle">最近播放的音樂</h2>
+          <h2 id="recentTitle">最近響起的旋律</h2>
           <span class="num">最近 20 筆</span>
         </div>
         <p class="hint">顯示 Spotify 提供的最近 20 筆播放紀錄（不包含 Podcast）。離開網頁後，回來時會重新查詢；這不是在背景持續執行，也不保證每首歌都能補齊。</p>
@@ -93,9 +107,9 @@
 
       <section id="panel-chat" class="tab-panel chat-layout" role="tabpanel" aria-labelledby="tab-chat" tabindex="0" hidden>
         <div class="panel-intro">
-          <p class="eyebrow">TALK WITH LING</p>
-          <h2>來聊聊吧</h2>
-          <p>音樂也好、今天發生的事也好，玲都在這裡。</p>
+          <p class="eyebrow">THE LITTLE DESK · 聊天小桌</p>
+          <h2>坐下來，和玲聊聊</h2>
+          <p>不必有什麼大事。喜歡的歌，或今天的小插曲，都能聊。</p>
         </div>
       <section class="chat-card" aria-labelledby="chatTitle">
         <div class="section-heading"><h2 id="chatTitle">和玲聊聊</h2><span class="num">CLOUD CHAT · 共用記憶</span></div>
@@ -113,7 +127,7 @@
         </form>
         <p class="status" id="chatStatus" role="status" aria-live="polite">尚未連線。Spotify 音樂分頁不受影響。</p>
         <div class="memory-card">
-          <h3>玲的長期記憶</h3>
+          <h3>桌上的記憶便箋</h3>
           <p class="hint">對話會儲存，但 AI 每次只讀取部分近期訊息。重要的事請親自寫進這裡，未來跨裝置聊天都會使用。</p>
           <label for="memoryInput">希望玲記住的事（最多 400 字）</label>
           <textarea id="memoryInput" placeholder="例如：我喜歡日系搖滾；跟我聊天請使用『你』。" maxlength="400" rows="2"></textarea>
@@ -126,9 +140,9 @@
 
       <section id="panel-settings" class="tab-panel settings-layout" role="tabpanel" aria-labelledby="tab-settings" tabindex="0" hidden>
         <div class="panel-intro">
-          <p class="eyebrow">YOUR CONNECTIONS</p>
-          <h2>連線與偏好設定</h2>
-          <p>Spotify 和聊天的設定，現在都放在這裡。</p>
+          <p class="eyebrow">ROOM KEYS · 房間的小抽屜</p>
+          <h2>房間的連線設定</h2>
+          <p>Spotify 和聊天的鑰匙都收在這裡，需要時再打開。</p>
         </div>
       <section class="settings-card" aria-labelledby="connectTitle">
         <div class="section-heading"><h2 id="connectTitle">Spotify 連線設定</h2><span class="num">01 / SETUP</span></div>
@@ -171,7 +185,7 @@
       </section>
       </section>
     </main>
-    <footer>Made for a quiet music moment ✦ Ling</footer>
+    <footer>Leave the little lamp on ✦ Ling · 玲的小房間</footer>
   </div>
 </body>
 </html>
