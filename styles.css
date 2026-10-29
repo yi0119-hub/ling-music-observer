@@ -47,3 +47,36 @@ input[type=text]:focus { border-color:var(--accent); }
 .footer-card p { color:var(--muted); font-size:12px; line-height:1.7; }
 footer { text-align:center; padding:25px 0 3px; color:#9188ad; font-size:11px; }
 @media(max-width:480px) { .site-header { gap:8px; } .brand-icon { width:40px; height:40px; } h1 { font-size:17px; } .app-shell { padding-left:13px; padding-right:13px; } .hero { padding:22px 18px; } .album-frame { width:121px; border-radius:15px; } .record { font-size:60px; } .song-area { gap:14px; } .song-details h2 { font-size:22px; } .artist { font-size:13px; } .live-indicator { font-size:10px; padding:5px 6px; } }
+
+/* v3：共享雲端聊天區，保留原本 Spotify 顯示樣式 */
+.chat-card { margin-top:17px; padding:23px 21px; border:1px solid #534771; border-radius:24px; background:linear-gradient(160deg,#24213b,#171b2c 64%); }
+.chat-card .section-heading h2 {font-size:17px; margin:0; }
+.chat-config {border:1px solid #3e3955; border-radius:15px; padding:3px 14px 13px; margin:18px 0; background:#101324aa;}
+.chat-config input {display:block; width:100%; padding:12px; border-radius:11px; background:#0c1020; border:1px solid #50536a; color:white; outline:none; font-size:13px;}
+.chat-config input:focus, .chat-form textarea:focus {border-color:var(--accent);}
+.chat-log {height:245px; overflow-y:auto; display:flex; flex-direction:column; gap:11px; padding:13px; border:1px solid #514866; border-radius:15px; background:#0d1020;}
+.chat-line {max-width:90%; border-radius:13px; padding:10px 13px; font-size:13px; line-height:1.7; overflow-wrap:anywhere; white-space:pre-wrap;}
+.chat-line p {margin:4px 0 0;}
+.chat-line-ling {align-self:flex-start; background:#2c2745; border:1px solid #524874;}
+.chat-line-user {align-self:flex-end; background:#39315b; border:1px solid #6a599e;}
+.chat-who {font-size:11px; font-weight:750; color:#d8c6ff;}
+.chat-form textarea {display:block; width:100%; min-height:78px; resize:vertical; background:#0c1020; color:white; border:1px solid #50536a; outline:none; padding:13px; border-radius:13px; font:inherit; font-size:14px; line-height:1.5; margin:8px 0 12px;}
+.chat-card .status {min-height:1.4em;}
+@media(max-width:480px){.chat-card {padding:20px 16px;} .chat-log {height:220px;} }
+
+/* v3 共用對話、釘選記憶 */
+.compact-heading { margin-top:18px; margin-bottom:12px; }
+.compact-heading h2 { font-size:15px !important; }
+.mini-btn {padding:7px 9px; min-height:32px; font-size:12px;}
+.chat-card textarea { display:block; width:100%; color:white; background:#0c1020; border:1px solid #50536a; outline:none; border-radius:12px; padding:12px; font:inherit; font-size:14px; line-height:1.6; resize:vertical; }
+.chat-card textarea:focus {border-color:var(--accent);}
+.chat-card .memory-card { margin-top:19px; padding:16px; border-radius:16px; background:#111529; border:1px solid #504766; }
+.memory-card h3 {font-size:15px; margin:0 0 7px;}
+.memory-card label {margin-top:12px;}
+.memory-card .actions {margin-top:9px;}
+.memory-list {display:flex; flex-direction:column; gap:8px; margin-top:15px;}
+.memory-line {display:flex; gap:12px; align-items:flex-start; justify-content:space-between; font-size:13px; line-height:1.6; padding:10px 11px; background:#20233b; border-radius:11px; overflow-wrap:anywhere;}
+.memory-line span {flex:1; min-width:0;}
+.memory-delete {border:1px solid #71617d; background:transparent; color:#e3d6f5; border-radius:8px; padding:6px; font-size:12px; flex-shrink:0;}
+.chat-card .btn-quiet {color:#c9bedc;}
+@media(max-width:480px){.memory-card{padding:13px!important}.chat-card .actions{gap:7px}.chat-card .actions .btn {font-size:12px;padding:10px 11px;}}

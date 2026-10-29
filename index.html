@@ -7,13 +7,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="玲的音樂觀察室" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://i.scdn.co https://*.scdn.co; connect-src https://accounts.spotify.com https://api.spotify.com; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://i.scdn.co https://*.scdn.co; connect-src https://accounts.spotify.com https://api.spotify.com https://*.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon-180.png" />
   <link rel="stylesheet" href="styles.css" />
   <title>玲的音樂觀察室</title>
   <script defer src="main.js"></script>
+  <script defer src="chat.js?v=3"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -44,7 +45,7 @@
         </div>
         <div class="message-row">
           <div class="small-avatar" aria-hidden="true">玲</div>
-          <p id="lingMessage" aria-live="polite">等妳把 Spotify 連上，我就能看見目前播放的歌曲名稱啦。</p>
+          <p id="lingMessage" aria-live="polite">等你把 Spotify 連上，我就能看見目前播放的歌曲名稱啦。</p>
         </div>
         <div class="actions">
           <button id="refreshButton" class="btn btn-primary" type="button" disabled>立即查看</button>
@@ -52,6 +53,40 @@
         </div>
         <p class="status" id="statusText" role="status" aria-live="polite">還沒有連接 Spotify。</p>
         <p class="note">只有這個頁面保持開啟、在前景時，才會每約 60 秒檢查一次。不是背景監聽，也不會讀取聲音。</p>
+      </section>
+
+      <section class="chat-card" aria-labelledby="chatTitle">
+        <div class="section-heading"><h2 id="chatTitle">和玲聊聊</h2><span class="num">03 / SHARED MEMORY · v3</span></div>
+        <p class="hint">這裡的聊天可保存到雲端，之後在其他裝置接同一個後端就能讀取。這仍是獨立 AI：不會讀取上方 Spotify 播放資料，也不會直接共享 ChatGPT 的內建記憶。</p>
+        <div class="chat-config">
+          <label for="chatEndpoint">共用核心網址（Cloudflare Worker）</label>
+          <input id="chatEndpoint" type="url" inputmode="url" placeholder="https://xxx.workers.dev/" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          <label for="chatPasscode">共用通行碼（不是 OpenAI API Key）</label>
+          <input id="chatPasscode" type="password" placeholder="請輸入 LING_ACCESS_CODE" autocomplete="off" spellcheck="false" />
+          <div class="actions" style="margin-top:14px">
+            <button id="chatConnect" class="btn btn-primary" type="button">連接共用核心</button>
+            <button id="chatForgetSession" class="btn btn-quiet" type="button">本機登出</button>
+          </div>
+          <p class="hint">只在本機儲存 Worker 網址，不儲存通行碼。API 金鑰只能設在 Cloudflare Secret。</p>
+          <p class="status" id="chatConnectedLabel">未連接共用核心</p>
+        </div>
+        <div class="section-heading compact-heading"><h2>共同對話</h2><button id="chatSync" class="btn btn-quiet mini-btn" type="button">同步最新紀錄</button></div>
+        <div class="chat-log" id="chatLog" role="log" aria-live="polite" aria-relevant="additions text"></div>
+        <form id="chatForm" class="chat-form">
+          <label for="chatInput">你想說什麼？</label>
+          <textarea id="chatInput" placeholder="玲，今天有件事想告訴你……" maxlength="800" rows="3" required></textarea>
+          <div class="actions"><button id="chatSend" class="btn btn-primary" type="submit">傳送訊息</button><button id="chatExport" class="btn btn-secondary" type="button">備份紀錄</button><button id="chatClear" class="btn btn-quiet" type="button">清空雲端對話</button></div>
+        </form>
+        <p class="status" id="chatStatus" role="status" aria-live="polite">尚未連線。上方 Spotify 播放顯示不受影響。</p>
+        <div class="memory-card">
+          <h3>玲的長期記憶</h3>
+          <p class="hint">對話會儲存，但 AI 每次只讀取部分近期訊息。重要的事請親自寫進這裡，未來跨裝置聊天都會使用。</p>
+          <label for="memoryInput">希望玲記住的事（最多 400 字）</label>
+          <textarea id="memoryInput" placeholder="例如：我喜歡日系搖滾；跟我聊天請使用『你』。" maxlength="400" rows="2"></textarea>
+          <div class="actions"><button id="memorySave" class="btn btn-secondary" type="button">記住這件事</button></div>
+          <div id="memoryList" class="memory-list" aria-label="已保存的長期記憶"></div>
+        </div>
+        <p class="note">只會把你主動輸入的聊天與記憶文字送到 Cloudflare / OpenAI；不會把 Spotify API 的歌曲內容傳給 AI。雲端資料可刪除，記得定期備份。</p>
       </section>
 
       <section class="settings-card" aria-labelledby="connectTitle">
@@ -71,7 +106,7 @@
 
       <section class="footer-card">
         <h2>這一版的界線</h2>
-        <p>只讀取當下播放資訊並呈現在畫面；不儲存歌曲清單、不建立聆聽者分析檔案、不將 Spotify 內容交給 AI 模型。妳可以隨時用「清除本機授權」刪除這台裝置儲存的令牌。</p>
+        <p>只讀取當下播放資訊並呈現在畫面；不儲存歌曲清單、不建立聆聽者分析檔案、不將 Spotify 內容交給 AI 模型。你可以隨時用「清除本機授權」刪除這台裝置儲存的令牌。</p>
         <p>歌曲名稱與封面等資訊由 <a href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer">Spotify</a> 提供。這個小工具不是 Spotify 官方產品。<a href="privacy.html">隱私說明</a></p>
       </section>
     </main>

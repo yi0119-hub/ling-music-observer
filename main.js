@@ -46,15 +46,15 @@ function playView({title, artist, album='', image='', url='', playing=false, ide
   $('spotifyLink').hidden = !okUrl;
   if (okUrl) $('spotifyLink').href = url;
   else $('spotifyLink').removeAttribute('href');
-  if (identity && identity !== lastIdentity && playing) message(`換歌啦，現在是「${title}」。這首先陪妳聽聽。`);
+  if (identity && identity !== lastIdentity && playing) message(`換歌啦，現在是「${title}」。這首先陪你聽聽。`);
   else if (!playing) message('音樂暫停了。要休息一下也不錯嘛。');
-  else message('我看得到妳正在播放的曲目，但目前還不能直接聽見聲音喔。');
+  else message('我看得到你正在播放的曲目，但目前還不能直接聽見聲音喔。');
   lastIdentity = identity;
 }
 function emptyView(why='目前沒有偵測到正在播放的內容。') {
   playView({title:'現在沒有播放歌曲',artist:why,playing:false});
   $('playState').textContent='無播放內容';
-  message('我在這裡，等妳開音樂再來看看吧。');
+  message('我在這裡，等你開音樂再來看看吧。');
 }
 function setMonitoring(next) {
   monitoring = next;
