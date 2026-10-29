@@ -99,3 +99,188 @@ footer { text-align:center; padding:25px 0 3px; color:#9188ad; font-size:11px; }
   .recent-item { align-items:flex-start; }
   .recent-item time { font-size:10px; }
 }
+
+
+/* v5 — 三分頁、手機優先設計。前版 Spotify 與聊天室的原始元件保留。 */
+[hidden] { display: none !important; }
+:root {
+  --bg:#0b0c18;
+  --surface:#181a2e;
+  --edge:#38354f;
+  --fg:#f8f6ff;
+  --muted:#bac0d4;
+  --accent:#b3a0f8;
+  --accent-light:#e5ddff;
+  --mint:#82e2c7;
+}
+html { scroll-behavior:smooth; }
+body {
+  background:
+    radial-gradient(ellipse 650px 320px at 8% 0%,#322550b3 0,transparent 74%),
+    radial-gradient(ellipse 460px 280px at 99% 6%,#172c46a8 0,transparent 78%),
+    var(--bg);
+}
+.app-shell { max-width:1020px; }
+.site-header { margin-bottom:22px; }
+.brand-icon { background:linear-gradient(145deg,#a78de4,#544778); box-shadow:0 7px 18px #07051368; }
+.header-subtitle { margin:5px 0 0; font-size:11px; color:var(--muted); letter-spacing:.02em; }
+.tab-nav {
+  position:sticky;
+  top:calc(8px + env(safe-area-inset-top));
+  z-index:20;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+  max-width:580px;
+  margin:0 auto 26px;
+  padding:6px;
+  border-radius:21px;
+  border:1px solid #61587a80;
+  background:#1b1d33f0;
+  box-shadow:0 12px 32px #0007;
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+}
+.tab-button {
+  min-width:0;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:9px 8px;
+  border:0;
+  border-radius:15px;
+  background:transparent;
+  color:#c9c7d9;
+  font:inherit;
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+  transition:background-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.tab-button.is-active {
+  background:linear-gradient(145deg,#bca9ff,#a995ee);
+  color:#20172e;
+  box-shadow:0 3px 11px #110b2650;
+}
+.tab-button:hover:not(.is-active) { background:#3d3655; color:white; }
+.tab-button:focus-visible, .btn:focus-visible, a:focus-visible {
+  outline:3px solid #e1c9ff;
+  outline-offset:3px;
+}
+.tab-symbol { font-size:19px; line-height:1; }
+.tab-panel { min-width:0; animation:panel-reveal .18s ease-out; }
+@keyframes panel-reveal {
+  from { opacity:.6; transform:translateY(4px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.panel-intro { margin:0 0 22px; padding:0 6px; }
+.panel-intro .eyebrow { color:#b7a8e9; }
+.panel-intro h2 { font-size:clamp(23px,3.6vw,31px); line-height:1.2; margin:8px 0 9px; letter-spacing:.015em; }
+.panel-intro p:not(.eyebrow) { color:var(--muted); font-size:13px; line-height:1.65; margin:0; }
+.hero {
+  background:linear-gradient(155deg,#302c4e,#1c2036 75%);
+  border-color:#64567f;
+}
+.hero,.recent-card,.chat-card,.settings-card,.footer-card { box-shadow:0 12px 36px #03040d2b; }
+.hero .eyebrow { color:#c9b8ff; }
+.hero .song-area { margin:24px 0; }
+.hero .message-row { border-top-color:#ffffff21; }
+.recent-card { background:linear-gradient(175deg,#1b1d33,#151929); }
+.recent-list {
+  max-height:550px;
+  overflow-y:auto;
+  padding-right:3px;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+.recent-item:hover { border-color:#8274a9; }
+.info-disclosure { margin-top:16px; border-top:1px solid #ffffff22; padding-top:14px; }
+.info-disclosure summary { cursor:pointer; color:#c5b6f7; font-size:12px; font-weight:650; }
+.info-disclosure .note { margin-bottom:0; padding:3px 0 0; }
+.chat-layout,.settings-layout { max-width:790px; margin:0 auto; }
+.chat-card { margin-top:0; }
+.chat-card .section-heading { gap:12px; }
+.chat-card .chat-log { height:clamp(270px,42svh,470px); }
+.chat-connection-hint {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid #615078;
+  border-radius:15px;
+  padding:12px 14px;
+  margin:13px 0 19px;
+  background:#2c2645;
+  color:#e4dcf6;
+  font-size:12px;
+  line-height:1.5;
+}
+.chat-connection-hint span { flex:1; min-width:160px; }
+.settings-layout .settings-card:first-of-type { margin-top:0; }
+.settings-layout .chat-settings { margin-top:17px; }
+.settings-layout .chat-config { margin:10px 0 0; }
+.settings-layout .footer-card { background:transparent; }
+.settings-card input, .chat-config input { min-height:46px; }
+@media(min-width:860px) {
+  .music-layout {
+    display:grid;
+    grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr);
+    column-gap:18px;
+    align-items:start;
+  }
+  .music-layout .panel-intro { grid-column:1 / -1; }
+  .music-layout .hero { grid-column:1; }
+  .music-layout .recent-card { grid-column:2; margin-top:0; }
+  .music-layout .hero .song-area { gap:17px; }
+  .music-layout .hero .album-frame { width:158px; }
+  .music-layout .hero .song-details h2 { font-size:clamp(21px,2.6vw,28px); }
+}
+@media(max-width:700px) {
+  .app-shell { padding-bottom:calc(112px + env(safe-area-inset-bottom)); }
+  .site-header { margin-bottom:24px; }
+  .tab-nav {
+    position:fixed;
+    top:auto;
+    left:12px;
+    right:12px;
+    bottom:calc(10px + env(safe-area-inset-bottom));
+    width:auto;
+    max-width:540px;
+    margin:0 auto;
+    border-radius:20px;
+    box-shadow:0 14px 42px #000a;
+  }
+  .tab-button { flex-direction:column; gap:4px; min-height:58px; font-size:12px; }
+  .tab-symbol { font-size:21px; }
+  .recent-list { max-height:370px; }
+  .panel-intro { margin-bottom:17px; }
+  .hero,.recent-card,.chat-card,.settings-card,.footer-card { border-radius:21px; }
+  .hero .song-area { gap:14px; }
+  .hero .album-frame { width:134px; }
+}
+@media(max-width:440px) {
+  .header-subtitle { font-size:10px; }
+  .brand-icon { height:43px; width:43px; }
+  .hero .song-area { align-items:center; }
+  .hero .album-frame { width:116px; }
+  .hero .song-details h2 { font-size:21px; }
+  .recent-card .section-heading,.chat-card .section-heading,.settings-card .section-heading { align-items:start; gap:9px; }
+  .recent-card .num,.chat-card .num,.settings-card .num { max-width:125px; text-align:right; line-height:1.45; }
+  .chat-connection-hint { align-items:flex-start; }
+}
+@supports selector(body:has(input:focus)) {
+  @media(max-width:700px) {
+    body:has(input:focus, textarea:focus) .tab-nav {
+      transform:translateY(calc(100% + 34px + env(safe-area-inset-bottom)));
+      pointer-events:none;
+    }
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  .tab-panel { animation:none; }
+  .tab-button { transition:none; }
+}
