@@ -284,3 +284,251 @@ body {
   .tab-panel { animation:none; }
   .tab-button { transition:none; }
 }
+
+
+/* v5.1 · 玲的小房間：暖燈、窗景、唱片角落、聊天小桌。純 CSS 佈景，無外部圖片與追蹤。 */
+:root {
+  --bg:#181321;
+  --surface:#281f32;
+  --edge:#615064;
+  --fg:#fff5ef;
+  --muted:#d0bdc9;
+  --accent:#ecc8aa;
+  --accent-light:#fbe6d1;
+  --mint:#b3e5c9;
+}
+html { background:var(--bg); }
+body {
+  color:var(--fg);
+  background:
+    radial-gradient(ellipse 680px 430px at 90% 3%,#6a3c574d 0,transparent 75%),
+    radial-gradient(ellipse 690px 400px at -8% 6%,#4f365d70 0,transparent 72%),
+    linear-gradient(180deg,#201727 0%,#181321 48%,#17121e 100%);
+}
+.site-header { padding:0 4px; margin-bottom:18px; }
+.site-header h1 { font-weight:800; letter-spacing:.025em; }
+.site-header .eyebrow { color:#ddc2a3; }
+.brand-icon {
+  background:linear-gradient(145deg,#b77f9a,#6a496d 58%,#42314d);
+  color:#fff4d6;
+  border:1px solid #f4d2a780;
+  font-family:Georgia,serif;
+  box-shadow:0 6px 22px #dc9f6833,inset 0 1px #ffffff50;
+}
+.live-indicator { background:#2d2239c9; border-color:#756075; }
+.live-indicator.connected { color:#c4ebce; border-color:#7b9e8d; }
+.header-subtitle { color:#e4d0d8; }
+.room-welcome {
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 240px;
+  gap:10px;
+  align-items:center;
+  min-height:185px;
+  padding:27px 31px;
+  margin-bottom:20px;
+  isolation:isolate;
+  overflow:hidden;
+  border-radius:28px;
+  border:1px solid #b88c9d91;
+  background:
+    radial-gradient(ellipse 260px 160px at 80% 25%,#e6a56b24,transparent 74%),
+    linear-gradient(115deg,#4a304b 0%,#38293f 53%,#30263a 100%);
+  box-shadow:0 15px 44px #09071280,inset 0 1px #ffffff22;
+}
+.room-welcome::before {
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:13px;
+  background:linear-gradient(90deg,#9a6b65aa,#ae7775aa,#95626fa0);
+  z-index:0;
+}
+.room-welcome-copy {position:relative;z-index:2;max-width:450px;}
+.room-welcome .eyebrow {color:#f9cfa8;letter-spacing:.13em;font-size:9px;}
+.room-welcome h2 {
+  font-size:clamp(21px,3vw,29px);
+  font-weight:750;
+  line-height:1.27;
+  letter-spacing:.01em;
+  margin:9px 0 12px;
+  color:#fff5ef;
+}
+.room-welcome p:not(.eyebrow) {font-size:13px;line-height:1.75;color:#e7d4d8;margin:0;max-width:320px;}
+.room-signature {display:inline-block;margin-top:15px;color:#f2cdab;font-size:11px;letter-spacing:.04em;font-style:italic;}
+.room-signature span {font-style:normal;color:#f9deb7;}
+.room-scene {position:relative;align-self:end;width:240px;height:162px;z-index:1;}
+.room-window {
+  position:absolute;
+  right:28px;
+  top:2px;
+  width:130px;
+  height:116px;
+  overflow:hidden;
+  border:8px solid #aa7b8c;
+  border-radius:65px 65px 9px 9px;
+  background:linear-gradient(180deg,#262948,#3e3857 65%,#79546b);
+  box-shadow:0 0 0 3px #463344,0 11px 32px #b46f8960;
+}
+.room-window::before,.room-window::after {content:"";position:absolute;background:#ac8399aa;z-index:2;}
+.room-window::before {top:0;bottom:0;width:5px;left:50%;transform:translateX(-50%);}
+.room-window::after {height:5px;top:52%;left:0;right:0;}
+.room-moon {position:absolute;top:17px;right:23px;width:29px;height:29px;border-radius:50%;background:#ffe6b9;box-shadow:0 0 20px 7px #ffdca655;}
+.room-star {position:absolute;font-size:12px;color:#f8dfc9;text-shadow:0 0 8px #fff2d3;}
+.room-star-one {top:23px;left:21px;}
+.room-star-two {top:70px;right:18px;font-size:14px;}
+.room-desk {
+  position:absolute;
+  bottom:12px;
+  left:9px;
+  right:-4px;
+  height:15px;
+  border-radius:7px 7px 4px 4px;
+  background:linear-gradient(180deg,#d5a08a,#976b70);
+  box-shadow:0 6px 0 #563c4b,0 11px 24px #120c1d60;
+}
+.room-desk-record {
+  position:absolute;right:14px;bottom:15px;width:69px;height:28px;
+  border-radius:7px 7px 3px 3px;
+  background:linear-gradient(150deg,#b68a91,#5b455d);
+  box-shadow:0 4px 0 #483244;
+}
+.room-desk-record::before {
+  content:"";position:absolute;left:18px;top:-15px;width:38px;height:38px;
+  border-radius:50%;background:repeating-radial-gradient(circle,#262032 0 3px,#41334a 4px 5px);
+  border:2px solid #37283d;box-shadow:0 0 0 3px #ad8ca0;
+}
+.room-desk-record::after {content:"";position:absolute;left:36px;top:2px;width:5px;height:5px;border-radius:50%;background:#f4d1a3;}
+.room-desk-mug {
+  position:absolute;right:111px;bottom:15px;width:22px;height:24px;
+  border-radius:3px 3px 8px 8px;background:#ddafaa;
+  box-shadow:inset 0 3px #fbe1cb;
+}
+.room-desk-mug::after {content:"";position:absolute;top:6px;right:-9px;width:10px;height:12px;border:4px solid #dda9a7;border-left:0;border-radius:0 9px 9px 0;}
+.room-lamp {position:absolute;left:17px;bottom:26px;width:75px;height:115px;z-index:2;}
+.room-lamp-glow {position:absolute;left:-19px;top:0;width:110px;height:120px;border-radius:50%;background:radial-gradient(circle,#ffd2a444 0,#e9a06b28 40%,transparent 72%);}
+.room-lamp-shade {position:absolute;top:8px;left:18px;width:55px;height:34px;clip-path:polygon(25% 0,75% 0,100% 100%,0 100%);background:linear-gradient(100deg,#f8d3ab,#c77e83);filter:drop-shadow(0 0 7px #ffd79b88);}
+.room-lamp-neck {position:absolute;left:45px;top:40px;width:4px;height:66px;background:#d3a7a5;border-radius:4px;}
+.room-lamp-base {position:absolute;left:25px;bottom:5px;width:45px;height:6px;border-radius:50%;background:#e5b8a3;}
+.tab-nav {
+  border-color:#7c627a;
+  background:#33283bf0;
+  box-shadow:0 14px 32px #080511a0;
+}
+.tab-button {color:#e2d3d9;}
+.tab-button.is-active {
+  background:linear-gradient(145deg,#f2d7bd,#ddaabc);
+  color:#332137;
+  box-shadow:0 4px 14px #0907114d,inset 0 1px #ffffff7d;
+}
+.tab-button:hover:not(.is-active) {background:#62445b;color:#fff8e9;}
+.tab-symbol {color:inherit;}
+.panel-intro {position:relative;margin:0 0 21px;padding:0 7px 12px;}
+.panel-intro::after {content:"";position:absolute;bottom:0;left:7px;width:58px;height:2px;background:linear-gradient(90deg,#e2b99a,transparent);}
+.panel-intro .eyebrow {color:#dfb9ab;}
+.panel-intro h2 {color:#fff4e8;font-weight:750;letter-spacing:.025em;}
+.panel-intro p:not(.eyebrow) {color:#d9c6d0;}
+.hero {
+  position:relative;
+  overflow:hidden;
+  border-color:#9b728d;
+  background:linear-gradient(145deg,#493249,#34283f 69%,#2a2639);
+  box-shadow:0 14px 35px #09071273,inset 0 1px #ffffff17;
+}
+.hero::before {
+  content:"";
+  position:absolute;
+  width:210px;height:210px;top:-115px;right:-75px;
+  pointer-events:none;
+  border-radius:50%;background:radial-gradient(circle,#f6c8a52b,transparent 73%);
+}
+.hero .eyebrow {color:#f5cfb4;}
+.hero .song-area {position:relative;z-index:1;}
+.album-frame {
+  border:5px solid #d8b9b3;
+  transform:rotate(-2deg);
+  box-shadow:0 12px 26px #100b1fa8,0 0 0 1px #efceb550;
+  background:#6e5372;
+}
+.record {color:#e8bdc8;}
+.song-details .pill {background:#37283c;color:#ffdfc0;border-color:#ac8b95;}
+.song-details h2 {color:#fff2ea;}
+.message-row {position:relative;gap:11px;border-top:1px dashed #cfadbb5b;}
+.message-row .small-avatar {background:linear-gradient(155deg,#e5b59a,#b57f9d);color:#312037;box-shadow:0 3px 10px #190e23;}
+.message-row p {color:#f6e1e4;}
+.btn {border-radius:13px;transition:background-color .15s ease,transform .15s ease;}
+.btn:active:not(:disabled) {transform:translateY(1px);}
+.btn-primary {background:#f0c3a8;border-color:#fae1ca;color:#352238;}
+.btn-secondary {background:#513c53;border-color:#8d6d83;color:#fff1e2;}
+.btn-quiet {color:#e1c2ce;border-color:#70586f;}
+.copy-btn {background:#76566e;}
+.status {color:#bce8ca;}
+.info-disclosure {border-top-color:#b9a2b94a;}
+.info-disclosure summary {color:#e8cbb8;}
+.recent-card {
+  border-color:#7e6479;
+  background:linear-gradient(180deg,#352a3d,#292335);
+}
+.recent-card .section-heading h2::before {content:"✦ ";font-size:13px;color:#e8bdac;}
+.recent-item {
+  border-color:#675367;
+  background:linear-gradient(110deg,#403448,#322b3e);
+  border-left:3px solid #bc8f9f;
+  border-radius:10px;
+}
+.recent-item:hover {border-color:#cca4a9;}
+.recent-details strong {color:#fff2e8;}
+.recent-details span,.recent-item time {color:#d2bfcb;}
+.recent-empty {border-color:#81667d;color:#e0cbd4;}
+.chat-card {
+  border-color:#8a687e;
+  background:linear-gradient(170deg,#3e2e43,#2b2538 65%,#282235);
+}
+.chat-card .section-heading h2::before {content:"☕ ";font-size:15px;}
+.chat-card .chat-log {
+  background:#241f30;
+  border-color:#735b75;
+  background-image:repeating-linear-gradient(180deg,transparent 0,transparent 38px,#ffffff06 39px,#ffffff06 40px);
+}
+.chat-line-ling {background:#574055;border-color:#82667e;}
+.chat-line-user {background:#76566b;border-color:#a47d96;}
+.chat-who {color:#ffe1c7;}
+.chat-card .memory-card {
+  background:linear-gradient(145deg,#f4e4d3,#e9d5c6);
+  border:1px solid #dfb5b5;
+  color:#392738;
+  box-shadow:4px 5px 0 #120c1936;
+  transform:rotate(-.3deg);
+}
+.memory-card h3,.memory-card .hint,.memory-card label {color:#503448;}
+.memory-card h3::before {content:"✎ ";color:#80596f;}
+.memory-card .memory-line {background:#ead0c6;color:#493047;border:1px solid #d9b7b4;}
+.memory-card .memory-delete {color:#62415c;border-color:#aa8699;}
+.memory-card .btn-secondary {background:#68445e;color:#fff5eb;border-color:#8c6479;}
+.chat-connection-hint {background:#513c53;border-color:#947384;color:#fff0e5;}
+.settings-card {background:#2d2639;border-color:#796078;}
+.settings-layout .footer-card {background:#211c2d;}
+.chat-config {background:#1f1a2b;border-color:#68546b;}
+.chat-config input,.chat-card textarea,.settings-card input[type=text] {background:#201b2a;border-color:#866c7f;color:#fff5ef;}
+label {color:#f5e5e2;}
+footer {color:#c3a3b7;font-style:italic;}
+@media(max-width:700px) {
+  .room-welcome {min-height:167px;padding:24px 151px 24px 20px;display:block;border-radius:23px;}
+  .room-welcome h2 {font-size:21px;margin:8px 0 10px;}
+  .room-welcome p:not(.eyebrow) {font-size:11px;line-height:1.65;}
+  .room-welcome .eyebrow {font-size:8px;letter-spacing:.09em;}
+  .room-signature {font-size:10px;margin-top:10px;}
+  .room-scene {position:absolute;right:4px;bottom:0;transform:scale(.61);transform-origin:right bottom;}
+  .tab-nav {background:#362a3fec;border-color:#906b88;}
+}
+@media(max-width:375px) {
+  .room-welcome {padding-right:139px;padding-left:16px;}
+  .room-welcome h2 {font-size:19px;}
+  .room-scene {right:-3px;transform:scale(.54);}
+  .room-signature {font-size:9px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .btn {transition:none;}
+}
