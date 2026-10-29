@@ -1,0 +1,49 @@
+:root { color-scheme: dark; --bg:#0c0f1d; --surface:#171b2c; --edge:#31374c; --fg:#f8f6fd; --muted:#b1b8cd; --accent:#af9af5; --accent-light:#dfd5ff; --mint:#79e3c1; }
+* { box-sizing: border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--fg); font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Noto Sans TC",sans-serif; background:radial-gradient(ellipse at 65% -10%,#39325d 0,transparent 45%),var(--bg); min-height:100svh; }
+button,input { font:inherit; } a { color:var(--accent-light); } button { cursor:pointer; } button:disabled { cursor:not-allowed; opacity:.55; }
+.app-shell { max-width:760px; margin:auto; padding:calc(28px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom)); }
+.site-header { display:flex; align-items:center; gap:12px; margin-bottom:30px; }
+.brand-icon { width:46px; height:46px; border-radius:17px; background:#443869; color:#f4eaff; display:grid; place-items:center; font-size:27px; }
+.eyebrow { margin:0 0 5px; font-size:10px; font-weight:800; letter-spacing:.18em; color:#b6addb; }
+h1 { font-size:19px; letter-spacing:.02em; margin:0; font-weight:750; }
+.live-indicator { margin-left:auto; padding:7px 10px; border-radius:22px; border:1px solid var(--edge); font-size:11px; white-space:nowrap; color:var(--muted); }
+.live-indicator.connected { border-color:#367964; color:var(--mint); }
+.hero { border:1px solid #51466f; background:linear-gradient(165deg,#282640 0%,#181d31 70%); padding:25px 21px; border-radius:27px; box-shadow:0 16px 44px #04040a50; }
+.song-area { display:flex; gap:20px; align-items:center; margin:27px 0 24px; min-width:0; }
+.album-frame { width:178px; aspect-ratio:1; flex-shrink:0; border-radius:18px; overflow:hidden; background:#3b345a; display:grid; place-items:center; box-shadow:0 9px 26px #0006; }
+.album-frame img { height:100%; width:100%; object-fit:cover; grid-area:1/1; }
+.record { font-size:90px; color:#aca0d4; grid-area:1/1; }
+.song-details { min-width:0; }
+.pill { display:inline-block; border:1px solid #756a9a; color:#e5d9ff; font-size:11px; padding:5px 9px; border-radius:30px; margin-bottom:11px; }
+.song-details h2 { font-size:clamp(22px,4vw,30px); line-height:1.25; margin:0 0 10px; overflow-wrap:anywhere; }
+.artist { font-size:15px; color:#e5e2f0; margin:0 0 5px; }
+.album { color:var(--muted); margin:0 0 11px; font-size:12px; }
+.spotify-link { text-decoration:none; font-size:12px; font-weight:750; }
+.message-row { display:flex; align-items:flex-start; gap:12px; border-top:1px solid #ffffff1c; padding:21px 0; }
+.small-avatar { background:#5b4a82; height:36px; width:36px; border-radius:13px; flex-shrink:0; display:grid; place-items:center; font-size:13px; font-weight:750; }
+.message-row p { margin:3px 0 0; font-size:14px; color:#e2dcf2; line-height:1.65; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; }
+.btn { border-radius:14px; padding:12px 17px; border:1px solid #494358; font-size:14px; font-weight:700; min-height:46px; }
+.btn-primary { background:var(--accent); color:#181329; border-color:transparent; }
+.btn-secondary { background:#302e48; color:#f1eaff; }
+.btn-quiet { background:transparent; color:var(--muted); }
+.status { color:var(--mint); font-size:12px; line-height:1.55; }
+.note,.hint { color:var(--muted); font-size:12px; line-height:1.65; }
+.settings-card,.footer-card { margin-top:17px; padding:23px 21px; border:1px solid var(--edge); border-radius:24px; background:var(--surface); }
+.section-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:17px; }
+.section-heading h2,.footer-card h2 { font-size:16px; margin:0; }
+.num { font-size:10px; color:#aaa1cd; letter-spacing:.13em; }
+label { display:block; font-size:13px; color:#e7e8f1; font-weight:650; margin:17px 0 8px; }
+input[type=text] { padding:13px; width:100%; border-radius:12px; background:#0c1020; border:1px solid #50536a; color:white; outline:none; font-size:13px; }
+input[type=text]:focus { border-color:var(--accent); }
+.uri-box { background:#0c1020; padding:9px; border:1px solid #50536a; border-radius:12px; display:flex; align-items:center; gap:7px; }
+.uri-box code { min-width:0; overflow-wrap:anywhere; flex:1; color:#beb7f0; font-size:11px; }
+.copy-btn { padding:9px; border-radius:8px; flex-shrink:0; border:0; background:#4b4564; color:white; }
+.checkline { display:flex; align-items:flex-start; gap:10px; font-weight:450; line-height:1.5; cursor:pointer; margin:16px 0; }
+.checkline input { margin-top:3px; width:17px; height:17px; accent-color:#aa98fb; }
+.footer-card { background:transparent; }
+.footer-card p { color:var(--muted); font-size:12px; line-height:1.7; }
+footer { text-align:center; padding:25px 0 3px; color:#9188ad; font-size:11px; }
+@media(max-width:480px) { .site-header { gap:8px; } .brand-icon { width:40px; height:40px; } h1 { font-size:17px; } .app-shell { padding-left:13px; padding-right:13px; } .hero { padding:22px 18px; } .album-frame { width:121px; border-radius:15px; } .record { font-size:60px; } .song-area { gap:14px; } .song-details h2 { font-size:22px; } .artist { font-size:13px; } .live-indicator { font-size:10px; padding:5px 6px; } }
