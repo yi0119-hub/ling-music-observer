@@ -67,3 +67,13 @@ Spotify 區是無需 Node.js 的前端展示功能，採用官方 Web API + OAut
 - Spotify 回傳的是最近播放（最多 20 筆），不是永久歷史；本網站不將這些資料存到 localStorage、D1、Google Drive 或聊天模型。
 - 如果收到 429 或 QUOTA_EXCEEDED，程式會退避或停止查詢；按鈕不能繞過 Spotify 的 Retry-After。
 - `chat.js` 和已經設定好的 Cloudflare 共用核心不受這次更新影響。你可在 GitHub Pull Request 先檢查改動，再合併到 `main` 正式發布。
+
+## v5：手機分頁排版（不變動 Spotify / 共用核心 API）
+
+- 主要畫面分為「聽音樂」「和玲聊」「設定」三個分頁。手機使用底部切換列，較大螢幕使用上方導覽列。
+- 「聽音樂」集中顯示目前播放、最近 20 筆播放與手動刷新。Spotify 在網頁前景時維持每約 30 秒更新。
+- 「和玲聊」保留原雲端對話、同步、備份、刪除與釘選記憶，不再被冗長的登入表單擠到畫面下方。
+- Spotify Client ID、授權、Cloudflare Worker 網址和通行碼統一移至「設定」分頁；原本的輸入欄位 ID、瀏覽器儲存鍵及 OAuth Redirect URI 不變。
+- 使用 `ui.js` 切換分頁：支援鍵盤左右方向鍵／Home／End、ARIA tab 標示、返回時恢復上次分頁（儲存在本機），不需要後端。
+- 音樂和聊天的資料仍然隔離。此版是排版更新，不會讓 Spotify 歌曲資料自動送入 AI，也沒有增加背景常駐功能。
+- 發布前請在 iPhone 檢查三個分頁、返回前景的 Spotify 更新、重新授權流程、Cloudflare 聊天連線與記憶，確認皆能正常運作。
