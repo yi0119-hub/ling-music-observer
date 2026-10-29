@@ -80,3 +80,22 @@ footer { text-align:center; padding:25px 0 3px; color:#9188ad; font-size:11px; }
 .memory-delete {border:1px solid #71617d; background:transparent; color:#e3d6f5; border-radius:8px; padding:6px; font-size:12px; flex-shrink:0;}
 .chat-card .btn-quiet {color:#c9bedc;}
 @media(max-width:480px){.memory-card{padding:13px!important}.chat-card .actions{gap:7px}.chat-card .actions .btn {font-size:12px;padding:10px 11px;}}
+
+
+/* v4 — Spotify 最近播放：僅呈現 API 回傳，不留存或送往 AI */
+.recent-card { margin-top:17px; padding:23px 21px; border:1px solid #534771; border-radius:24px; background:var(--surface); }
+.recent-card .section-heading h2 { font-size:17px; }
+.recent-list { margin:14px 0 16px; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
+.recent-item { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; padding:12px 13px; border:1px solid #49435f; background:#101425; border-radius:13px; }
+.recent-item a { display:block; flex:1; min-width:0; text-decoration:none; }
+.recent-item a:hover strong,.recent-item a:focus-visible strong { text-decoration:underline; }
+.recent-details { min-width:0; display:flex; flex-direction:column; gap:5px; }
+.recent-details strong { overflow-wrap:anywhere; font-weight:650; color:var(--fg); font-size:13px; }
+.recent-details span { color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+.recent-item time { color:var(--muted); white-space:nowrap; flex-shrink:0; font-size:11px; }
+.recent-empty { padding:14px; color:var(--muted); border:1px dashed #4a435f; border-radius:12px; font-size:13px; }
+@media(max-width:480px) {
+  .recent-card { padding:20px 16px; }
+  .recent-item { align-items:flex-start; }
+  .recent-item time { font-size:10px; }
+}

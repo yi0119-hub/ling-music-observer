@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icon-180.png" />
   <link rel="stylesheet" href="styles.css" />
   <title>玲的音樂觀察室</title>
-  <script defer src="main.js"></script>
+  <script defer src="main.js?v=4"></script>
   <script defer src="chat.js?v=4"></script>
 </head>
 <body>
@@ -52,7 +52,23 @@
           <button id="toggleButton" class="btn btn-secondary" type="button" disabled>暫停自動更新</button>
         </div>
         <p class="status" id="statusText" role="status" aria-live="polite">還沒有連接 Spotify。</p>
-        <p class="note">只有這個頁面保持開啟、在前景時，才會每約 60 秒檢查一次。不是背景監聽，也不會讀取聲音。</p>
+        <p class="note">此頁面在前景時每約 30 秒更新目前播放。iPhone 切到背景後可能暫停更新；回到頁面會立刻重新查詢，並補看 Spotify 最近播放。不是背景監聽，也不讀取聲音。</p>
+      </section>
+
+      <section class="recent-card" aria-labelledby="recentTitle">
+        <div class="section-heading">
+          <h2 id="recentTitle">最近播放的音樂</h2>
+          <span class="num">02 / SPOTIFY RECENT PLAYS</span>
+        </div>
+        <p class="hint">顯示 Spotify 提供的最近 20 筆播放紀錄（不包含 Podcast）。離開網頁後，回來時會重新查詢；這不是在背景持續執行，也不保證每首歌都能補齊。</p>
+        <ol id="recentList" class="recent-list" aria-label="Spotify 最近播放列表">
+          <li class="recent-empty">連接 Spotify 後就能查看最近播放的歌曲。</li>
+        </ol>
+        <div class="actions">
+          <button id="recentRefreshButton" class="btn btn-secondary" type="button" disabled>更新最近播放</button>
+        </div>
+        <p class="status" id="recentStatus" role="status" aria-live="polite">請連接 Spotify 以查看最近播放。</p>
+        <p class="note">近期播放資料只在這次網頁開啟時顯示，不會永久儲存在觀察室，也不會自動交給 AI 做音樂喜好分析。若之前已登入 Spotify，請重新授權一次以新增「最近播放」權限。</p>
       </section>
 
       <section class="chat-card" aria-labelledby="chatTitle">
@@ -107,7 +123,7 @@
 
       <section class="footer-card">
         <h2>這一版的界線</h2>
-        <p>只讀取當下播放資訊並呈現在畫面；不儲存歌曲清單、不建立聆聽者分析檔案、不將 Spotify 內容交給 AI 模型。你可以隨時用「清除本機授權」刪除這台裝置儲存的令牌。</p>
+        <p>只顯示 Spotify 目前播放與最近播放（最多 20 筆）；不另外永久儲存 Spotify 播放歷史、不建立聆聽者分析，也不將 Spotify 內容交給 AI 模型。你可以隨時用「清除本機授權」刪除這台裝置儲存的令牌。</p>
         <p>歌曲名稱與封面等資訊由 <a href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer">Spotify</a> 提供。這個小工具不是 Spotify 官方產品。<a href="privacy.html">隱私說明</a></p>
       </section>
     </main>
