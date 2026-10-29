@@ -17,6 +17,7 @@ let monitoring = true;
 let busy = false;
 let lastIdentity = null;
 let quotaBlocked = false;
+let currentRetryAt = 0;
 let lastRecentSync = 0;
 let recentBusy = false;
 let recentScopeBlocked = false;
@@ -253,9 +254,12 @@ async function validToken() {
   }
 }
 async function refreshNow() {
-  if(busy) return;
+  if(busy || quotaBlocked || document.visibilityState !== 'visible') return;
+  if (Date.now() < currentRetryAt) {
+    status(`Spotify 要求暫停查詢；請於約 ${Math.ceil((currentRetryAt-Date.now())/1000)} 秒後重試。`);
+    return;
+  }
   clearTimeout(timer);
-  if(document.visibilityState !== 'visible') return;
   busy = true;
   $('refreshButton').disabled = true;
   let nextDelay=DEFAULT_MS;
@@ -271,7 +275,7 @@ async function refreshNow() {
       canRefreshRecent=false;
       let reason=''; try { reason=(await resp.json()).error?.reason || ''; } catch { /* ignore */ }
       if(reason==='QUOTA_EXCEEDED') { quotaBlocked=true; status('Spotify 開發額度用完，已停止自動查詢。請稍後手動重試。'); }
-      else { nextDelay=Math.max(60000,Number(resp.headers.get('Retry-After') || 120)*1000); status(`查詢頻率受限，將在約 ${Math.ceil(nextDelay/1000)} 秒後再試。`); }
+      else { nextDelay=Math.max(60000,Number(resp.headers.get('Retry-After') || 120)*1000); currentRetryAt=Date.now()+nextDelay; status(`查詢頻率受限，將在約 ${Math.ceil(nextDelay/1000)} 秒後再試。`); }
       return;
     }
     if(!resp.ok) { status(`讀取播放資料失敗：HTTP ${resp.status}`); return; }
@@ -300,7 +304,7 @@ function disconnect() {
   for(const k of ['refresh','pending-auth']) { removeSaved(k); removeTemp(k); }
   removeSaved('client-id');
   accessToken=null; expiresAt=0; lastIdentity=null; quotaBlocked=false;
-  lastRecentSync=0; recentBusy=false; recentScopeBlocked=false; recentRetryAt=0;
+  currentRetryAt=0; lastRecentSync=0; recentBusy=false; recentScopeBlocked=false; recentRetryAt=0;
   renderRecentlyPlayed([]);
   recentStatus('請連接 Spotify 以查看最近播放。');
   $('clientId').value=''; $('remember').checked=false;
@@ -316,6 +320,7 @@ async function init() {
   $('refreshButton').addEventListener('click',()=>{ quotaBlocked=false; void refreshNow(); });
   $('recentRefreshButton').addEventListener('click',async()=>{
     if (recentBusy || Date.now()<recentRetryAt) return;
+    if (quotaBlocked) { recentStatus('Spotify 配額已用完，請稍後再試。'); return; }
     const token = await validToken();
     if (token) await refreshRecentIfDue(token,true);
     else recentStatus('請先連接 Spotify。');
