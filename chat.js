@@ -4,6 +4,9 @@
   const $ = id => document.getElementById(id);
   const endpoint = $('chatEndpoint');
   const passcode = $('chatPasscode');
+  const remember = $('chatRemember');
+  const SAVED_PASSCODE = 'ling-chat-passcode-v4';
+  const SAVED_OPTIN = 'ling-chat-remember-v4';
   const chatLog = $('chatLog');
   const statusNode = $('chatStatus');
   const sendButton = $('chatSend');
@@ -16,6 +19,26 @@
   let memories = [];
   const status = text => { statusNode.textContent = text; };
   try { endpoint.value = localStorage.getItem('ling-chat-endpoint-v3') || localStorage.getItem('ling-chat-endpoint-v2') || ''; } catch {}
+  // Opt-in persistence; passcode never appears in URL or source code.
+  try {
+    if (localStorage.getItem(SAVED_OPTIN) === 'yes') {
+      const saved = localStorage.getItem(SAVED_PASSCODE) || '';
+      if (saved.length >= 32) { passcode.value = saved; remember.checked = true; }
+    }
+  } catch { /* private browsing or storage disabled */ }
+  function forgetSavedPasscode() {
+    try { localStorage.removeItem(SAVED_PASSCODE); localStorage.removeItem(SAVED_OPTIN); } catch {}
+  }
+  function persistOnlyAfterVerified() {
+    if (!remember.checked) { forgetSavedPasscode(); return; }
+    try {
+      localStorage.setItem(SAVED_PASSCODE,passcode.value);
+      localStorage.setItem(SAVED_OPTIN,'yes');
+    } catch { status('已連接，但瀏覽器無法保存登入。下次需要重新輸入。'); }
+  }
+  remember.addEventListener('change',()=>{
+    if (!remember.checked) forgetSavedPasscode();
+  });
   endpoint.addEventListener('change', () => {
     try { localStorage.setItem('ling-chat-endpoint-v3',endpoint.value.trim()); } catch {}
   });
@@ -126,10 +149,12 @@
     status('正在連接玲的共用核心……');
     await sync();
     try { localStorage.setItem('ling-chat-endpoint-v3',endpoint.value.trim()); } catch {}
+    persistOnlyAfterVerified();
   }));
   $('chatSync').addEventListener('click',()=>execute(sync));
   $('chatForgetSession').addEventListener('click',()=>{
     if(pending) return;
+    forgetSavedPasscode(); remember.checked=false;
     passcode.value=''; connected=false; messages=[]; memories=[];
     renderMessages(); renderMemories(); controls();
     status('已登出這台裝置的聊天室，雲端對話與記憶仍保留。');
@@ -197,6 +222,12 @@
     status('已下載備份（'+all.length+' 則對話及 '+pinned.length+' 則記憶）。');
   }));
   renderMessages(); renderMemories(); controls();
+  if (remember.checked && passcode.value.length >= 32 && endpointURL()) {
+    status('正在自動恢復玲的共用核心連線……');
+    execute(async()=>{
+      await sync();
+    });
+  }
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible' && connected && !pending) execute(sync);
   });

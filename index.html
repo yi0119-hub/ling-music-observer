@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="styles.css" />
   <title>玲的音樂觀察室</title>
   <script defer src="main.js"></script>
-  <script defer src="chat.js?v=3"></script>
+  <script defer src="chat.js?v=4"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -63,11 +63,12 @@
           <input id="chatEndpoint" type="url" inputmode="url" placeholder="https://xxx.workers.dev/" autocomplete="off" autocapitalize="off" spellcheck="false" />
           <label for="chatPasscode">共用通行碼（不是 OpenAI API Key）</label>
           <input id="chatPasscode" type="password" placeholder="請輸入 LING_ACCESS_CODE" autocomplete="off" spellcheck="false" />
+          <label class="checkline"><input id="chatRemember" type="checkbox" /> <span>記住這台裝置，下次開啟自動連線（限私人手機使用）</span></label>
           <div class="actions" style="margin-top:14px">
             <button id="chatConnect" class="btn btn-primary" type="button">連接共用核心</button>
             <button id="chatForgetSession" class="btn btn-quiet" type="button">本機登出</button>
           </div>
-          <p class="hint">只在本機儲存 Worker 網址，不儲存通行碼。API 金鑰只能設在 Cloudflare Secret。</p>
+          <p class="hint">預設不保存通行碼；只有勾選「記住這台裝置」，才會在成功連線後把通行碼存於本機瀏覽器（未加密）。本機登出可清除。請勿在共用裝置勾選。OpenAI API 金鑰只應設在 Cloudflare Secret。</p>
           <p class="status" id="chatConnectedLabel">未連接共用核心</p>
         </div>
         <div class="section-heading compact-heading"><h2>共同對話</h2><button id="chatSync" class="btn btn-quiet mini-btn" type="button">同步最新紀錄</button></div>
