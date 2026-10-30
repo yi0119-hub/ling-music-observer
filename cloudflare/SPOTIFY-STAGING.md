@@ -2,7 +2,7 @@
 
 # Spotify 背景查詢：獨立測試版
 
-部署紀錄：測試程式版本 `7d90afa7` 已啟用；Dashboard 已儲存並顯示 `Every 10 minutes` 的 Cron（僅此測試 Worker）。帳戶持有人已確認新增 Redirect URI。Spotify 帳號仍需由本人在頁面完成授權與啟用，這兩個動作不能由部署紀錄代替。
+部署紀錄：測試程式版本 `91842804` 已啟用，Cron 為 `*/2 * * * *`。本人已完成 OAuth 與啟用，真實 Spotify 回傳 `playing`，並已確認關閉測試室後收到換歌通知。
 
 測試網址與 Redirect URI（完整相同，包含結尾 `/`）：
 
@@ -33,9 +33,9 @@
 
 46 項測試通過，新增 PKCE challenge/最小 scope、缺少同意不啟動、state/期限/回呼來源驗證、授權與啟用分開、token 不持久保存、沿用既有每日問候偏好及限定排程派送等測試。
 
-測試包 SHA-256：`e1f15676cbb5c0e93b78e3d797d1a8e72785e100da55a530f70c4e5e4f0d2f28`。測試頁預填本人提供的公開 Client ID，不包含 Client Secret。
+測試包 SHA-256：`762041d23780e0f25956010e9e68b0ddaf525126cf9bc21240daf8c2bab39618`。測試頁預填本人提供的公開 Client ID，不包含 Client Secret。
 
-仍需本人完成 Spotify 開發者設定與帳號授權；不得將測試頁已部署或 Cron 已設定，宣稱為真實 Spotify 播放查詢已通過。
+本人已完成開發者設定與帳號授權，並確認實際收到換歌提醒；這項結果僅適用獨立測試室，正式環境尚未部署。
 
 參考：[Spotify PKCE](https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow)、[Redirect URI](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri)、[Cloudflare Cron](https://developers.cloudflare.com/workers/configuration/cron-triggers/)。
 
