@@ -593,3 +593,25 @@ footer {color:#c3a3b7;font-style:italic;}
     margin: 10px 0 8px;
   }
 }
+
+/* v5.2 opt-in background options — scoped to settings; preserve Ling's little room */
+.bg-feature { overflow:hidden; }
+.bg-feature summary { cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.bg-feature summary::-webkit-details-marker { display:none; }
+.bg-feature summary::after { content:"＋"; flex-shrink:0; font-size:19px; color:#e8c1ba; }
+.bg-feature[open] summary::after { content:"−"; }
+.bg-summary-title { font-size:16px; font-weight:750; color:#fff2e8; }
+.bg-summary-extra { margin-left:auto; font-size:11px; color:#d6bdc7; text-align:right; }
+.bg-feature > .hint { margin:13px 0; }
+.bg-feature-actions { display:flex; flex-wrap:wrap; gap:8px; margin:11px 0; }
+.bg-feature-actions .btn { font-size:12px; padding:9px 12px; min-height:41px; }
+.bg-feature .checkline { display:flex; align-items:flex-start; gap:11px; margin:12px 0; font-size:12px; }
+.bg-feature .checkline input[type=checkbox] { -webkit-appearance:checkbox; appearance:auto; flex:0 0 18px; width:18px; height:18px; min-height:18px; margin:0; padding:0; }
+.bg-feature .checkline span { flex:1; min-width:0; }
+.bg-spotify-panel { background:#241d31; border:1px solid #72576c; border-radius:14px; padding:13px; margin:14px 0; }
+.bg-spotify-panel h3 { font-size:14px; margin:0 0 8px; color:#ffe7d5; }
+@media (max-width:700px) {
+  .bg-feature .bg-summary-extra { max-width:105px; }
+  .bg-feature-actions .btn { flex:1 1 125px; }
+  .bg-feature summary { gap:7px; }
+}
