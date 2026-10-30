@@ -42,6 +42,9 @@ jobs:
           node --test cloudflare/concurrency.test.mjs
           node --test cloudflare/frontend.test.mjs
           node --test cloudflare/merge-offline.test.mjs
+          node cloudflare/build-staging.mjs
+          node --check cloudflare/.generated/staging.worker.mjs
+          node --test cloudflare/staging.test.mjs
       - name: Verify v5 and background integration
         run: node cloudflare/verify.mjs
 

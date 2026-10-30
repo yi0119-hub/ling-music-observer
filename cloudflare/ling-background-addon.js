@@ -51,6 +51,7 @@ async function getVapidBundle(db,env){
   const existing=await get(db,'vapid_bundle');
   if(existing)return JSON.parse(existing);
   const pair=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+  if(!('publicKey' in pair)||!('privateKey' in pair))throw Error('Expected ECDSA key pair');
   const value=JSON.stringify({
     publicKey:b64(await crypto.subtle.exportKey('raw',pair.publicKey)),
     sealedPrivateKey:await seal(env,JSON.stringify(await crypto.subtle.exportKey('jwk',pair.privateKey)))
@@ -68,9 +69,13 @@ async function payloadFor(sub,data){
   const client=un64(sub.p256dh),auth=un64(sub.auth);
   if(client.length!==65||client[0]!==4||auth.length!==16)throw Error('Bad push keys');
   const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
-  const ephemeral=new Uint8Array(await crypto.subtle.exportKey('raw',pair.publicKey));
+  if(!('publicKey' in pair)||!('privateKey' in pair))throw Error('Expected ECDH key pair');
+  const exported=await crypto.subtle.exportKey('raw',pair.publicKey);
+  if(!(exported instanceof ArrayBuffer))throw Error('Expected raw ECDH public key');
+  const ephemeral=new Uint8Array(exported);
   const publicKey=await crypto.subtle.importKey('raw',client,{name:'ECDH',namedCurve:'P-256'},false,[]);
-  const shared=new Uint8Array(await crypto.subtle.deriveBits({name:'ECDH',public:publicKey},pair.privateKey,256));
+  const agreement={name:'ECDH',public:publicKey};
+  const shared=new Uint8Array(await crypto.subtle.deriveBits(agreement,pair.privateKey,256));
   const ikm=await hkdf(shared,auth,cat('WebPush: info\u0000',client,ephemeral),32);
   const salt=crypto.getRandomValues(new Uint8Array(16));
   const cek=await hkdf(ikm,salt,bytes('Content-Encoding: aes128gcm\u0000'),16);

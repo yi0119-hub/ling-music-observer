@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {dirname,join} from 'node:path';
+const root=dirname(fileURLToPath(import.meta.url));
+const addon=fs.readFileSync(join(root,'ling-background-addon.js'),'utf8').replaceAll('export async function ','async function ');
+const entry=fs.readFileSync(join(root,'staging.worker.mjs'),'utf8').replace("import {handleLingBackground} from './ling-background-addon.js';",'');
+const source=addon+'\n'+entry;
+const dir=join(root,'.generated');fs.mkdirSync(dir,{recursive:true});
+fs.writeFileSync(join(dir,'staging.worker.mjs'),source,{mode:0o600});
+console.log('Staging bundle SHA-256:',createHash('sha256').update(source).digest('hex'));

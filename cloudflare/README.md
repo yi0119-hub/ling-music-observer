@@ -1,6 +1,6 @@
 # 玲的 Cloudflare Worker：受控部署準備
 
-**目前沒有部署！** 這個 Draft PR 只加入 GitHub Actions 檢查與部署保護。正式網站的聊天、Spotify、D1 都不變。
+**正式環境沒有部署。** 已建立全新、獨立的 v5.2 測試 Worker 與 D1，詳見 [STAGING.md](STAGING.md)。正式網站的聊天、Spotify、D1 都不變。
 
 ## 為何先停在審查階段
 
@@ -24,7 +24,7 @@ GitHub 手動 Workflow 只會在它已進入預設 `main` 分支後出現。PR �
 
 ## v5.2 離線開發驗證
 
-目前開發檢查共 27 項測試，涵蓋加密、訂閱、背景查詢、授權競態及合併預覽。詳見 [V5.2-VALIDATION.md](V5.2-VALIDATION.md)。這些測試不需要 Cloudflare 憑證。
+目前開發檢查共 30 項測試，涵蓋加密、訂閱、背景查詢、授權競態、合併預覽及獨立測試入口。詳見 [V5.2-VALIDATION.md](V5.2-VALIDATION.md)。這些測試不需要 Cloudflare 憑證。
 
 使用既有唯讀稽核的私有 Worker 原始碼產生離線預覽：
 
