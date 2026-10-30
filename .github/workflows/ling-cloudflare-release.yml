@@ -1,0 +1,71 @@
+name: Ling Cloudflare Worker - guarded release
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ling-cloudflare-release.yml'
+      - 'cloudflare/**'
+      - 'background.js'
+      - 'sw.js'
+      - 'index.html'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY_LING_V4 after reviewing live Worker, D1 bindings and rollback'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check project without deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check existing front-end scripts
+        run: |
+          node --check main.js
+          node --check chat.js
+          node --check background.js
+          node --check sw.js
+          node --check ui.js
+      - name: Verify v5 and background integration
+        run: node cloudflare/verify.mjs
+
+  deploy:
+    name: Deploy only after explicit production approval
+    needs: check
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirm == 'DEPLOY_LING_V4' &&
+      vars.LING_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: ling-cloudflare-production
+    concurrency:
+      group: ling-cloudflare-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require reviewed backend and prepare Wrangler configuration
+        env:
+          LING_WORKER_NAME: ${{ vars.LING_WORKER_NAME }}
+          LING_D1_DATABASE_NAME: ${{ vars.LING_D1_DATABASE_NAME }}
+          LING_D1_DATABASE_ID: ${{ vars.LING_D1_DATABASE_ID }}
+        run: node cloudflare/prepare-release.mjs
+      - name: Bundle preview (no remote deploy)
+        run: npx --yes wrangler@4 deploy --dry-run --config wrangler.generated.json
+      - name: Deploy reviewed backend with existing D1 binding
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.generated.json --keep-vars
