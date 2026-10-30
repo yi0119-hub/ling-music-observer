@@ -17,7 +17,7 @@
   async function call(action,options={}){
     const secret=$('chatPasscode').value;
     if(secret.length<32)throw Error('請先輸入玲的共用通行碼，或啟用「記住這台裝置」。');
-    const response=await fetch(endpoint(),{
+    const response=await fetch(endpoint()+'ling-bg',{
       method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Ling-Access-Code':secret},
       body:JSON.stringify({action,...options})
     });
