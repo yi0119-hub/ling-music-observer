@@ -133,6 +133,8 @@ async function songCheck(db,env){
   const active=async()=>await get(db,'spotify_token')===crypt&&await get(db,'spotify_enabled')==='yes';
   const save=async(k,v)=>db.prepare("INSERT INTO ling_v4_settings(key,value) SELECT ?,? WHERE EXISTS(SELECT 1 FROM ling_v4_settings WHERE key='spotify_token' AND value=?) AND EXISTS(SELECT 1 FROM ling_v4_settings WHERE key='spotify_enabled' AND value='yes') ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(k,String(v),crypt).run();
   let refresh;try{refresh=await unseal(env,crypt);}catch{console.warn('Spotify token cannot decrypt');return;}
+  if(!(await save('spotify_last_check',Date.now())).meta?.changes)return;
+  await save('spotify_result','checking');
   const auth=await fetch('https://accounts.spotify.com/api/token',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:clientId}),
@@ -140,6 +142,7 @@ async function songCheck(db,env){
   });
   if(!await active())return;
   if(!auth.ok){
+    await save('spotify_result',auth.status===429?'rate_limited':[400,401].includes(auth.status)?'reauthorize':'spotify_http_'+auth.status);
     if([400,401].includes(auth.status)){
       const removed=await db.prepare("DELETE FROM ling_v4_settings WHERE key IN ('spotify_enabled','spotify_token') AND EXISTS(SELECT 1 FROM ling_v4_settings WHERE key='spotify_token' AND value=?)").bind(crypt).run();
       if(!removed.meta?.changes)return;
@@ -157,8 +160,9 @@ async function songCheck(db,env){
   if(!await active())return;
   const res=await fetch('https://api.spotify.com/v1/me/player/currently-playing',{headers:{Authorization:'Bearer '+token.access_token},redirect:'manual',signal:AbortSignal.timeout(10000)});
   if(!await active())return;
-  if(res.status===204)return;
+  if(res.status===204){await save('spotify_result','idle');return;}
   if(res.status===429){
+    await save('spotify_result','rate_limited');
     let reason='';try{reason=(await res.json()).error?.reason||'';}catch{}
     if(reason==='QUOTA_EXCEEDED'){
       if(!(await save('spotify_enabled','no')).meta?.changes)return;
@@ -168,9 +172,10 @@ async function songCheck(db,env){
     }
     return;
   }
-  if(!res.ok)return;
+  if(!res.ok){await save('spotify_result','spotify_http_'+res.status);return;}
   const result=await res.json();
-  if(!result?.is_playing||result.item?.type!=='track'||!result.item?.id)return;
+  if(!result?.is_playing||result.item?.type!=='track'||!result.item?.id){await save('spotify_result','idle');return;}
+  await save('spotify_result','playing');
   const hash=b64(await dig('ling-v4-last-track:'+result.item.id));
   const prev=await get(db,'spotify_last');
   if(prev===hash)return;
@@ -220,7 +225,9 @@ export async function handleLingBackground(request,env){
     if(action==='bg_status'){
       const n=(await db.prepare('SELECT count(*) AS n FROM ling_v4_push').first())?.n||0;
       return reply({ok:true,pushSubscriptions:Number(n),songEnabled:await get(db,'spotify_enabled')==='yes',
-        songPush:await get(db,'push_song')==='yes',dailyPush:await get(db,'push_daily')==='yes',pollMinutes:10});
+        songPush:await get(db,'push_song')==='yes',dailyPush:await get(db,'push_daily')==='yes',pollMinutes:10,
+        lastSpotifyCheck:Number(await get(db,'spotify_last_check')||0),spotifyResult:await get(db,'spotify_result'),
+        spotifyBackoffUntil:Number(await get(db,'spotify_backoff_until')||0)});
     }
     if(action==='bg_vapid')return reply({ok:true,publicKey:(await getVapidBundle(db,env)).publicKey});
     if(action==='bg_subscribe'){
@@ -251,12 +258,12 @@ export async function handleLingBackground(request,env){
         db.prepare('INSERT INTO ling_v4_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('spotify_token',await seal(env,refreshToken)),
         db.prepare('INSERT INTO ling_v4_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('spotify_client',clientId),
         db.prepare('INSERT INTO ling_v4_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('spotify_enabled','yes'),
-        db.prepare("DELETE FROM ling_v4_settings WHERE key IN ('spotify_last','spotify_last_push','spotify_backoff_until')")
+        db.prepare("DELETE FROM ling_v4_settings WHERE key IN ('spotify_last','spotify_last_push','spotify_backoff_until','spotify_last_check','spotify_result')")
       ]);
       return reply({ok:true});
     }
     if(action==='bg_disable_spotify'){
-      await db.prepare("DELETE FROM ling_v4_settings WHERE key IN ('spotify_token','spotify_client','spotify_enabled','spotify_last','spotify_last_push','spotify_backoff_until')").run();
+      await db.prepare("DELETE FROM ling_v4_settings WHERE key IN ('spotify_token','spotify_client','spotify_enabled','spotify_last','spotify_last_push','spotify_backoff_until','spotify_last_check','spotify_result')").run();
       return reply({ok:true});
     }
     if(action==='bg_test_push'){

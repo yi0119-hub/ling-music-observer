@@ -45,6 +45,7 @@ jobs:
           node cloudflare/build-staging.mjs
           node --check cloudflare/.generated/staging.worker.mjs
           node --test cloudflare/staging.test.mjs
+          node --test cloudflare/staging-ui.test.mjs
       - name: Verify v5 and background integration
         run: node cloudflare/verify.mjs
 

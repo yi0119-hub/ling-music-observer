@@ -1,5 +1,7 @@
 # v5.2 獨立測試部署（2026-10-30）
 
+Spotify 更新：已加入獨立 PKCE 授權介面及每十分鐘背景處理器，詳見 [SPOTIFY-STAGING.md](SPOTIFY-STAGING.md)。下文「沒有排程」描述的是初次通知部署狀態；Spotify 帳號必須另行完成授權並按啟用才開始查詢。
+
 更新：已設定獨立測試通行碼並登記裝置。修正 CSP 與 Workers redirect 相容性後，帳戶持有人已確認 iPhone 實際收到測試通知。詳見 [NOTIFICATION-FIXES.md](NOTIFICATION-FIXES.md)。下方初次部署時的健康檢查是歷史快照；正式環境整合與背景 Spotify 仍未啟用。
 
 測試網址：https://ling-v52-staging-20261030.eric233525.workers.dev/
