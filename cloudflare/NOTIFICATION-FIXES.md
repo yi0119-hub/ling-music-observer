@@ -9,6 +9,6 @@
 
 新的測試包 SHA-256：`7202729f63758e29ab97da23683762b0d06fcfd56461ab39e92db8010412942b`。既有測試 Secret、VAPID 與裝置訂閱不重設；只更新獨立測試 Worker 的程式。
 
-實際 iPhone 通知送達仍需帳戶持有人按測試通知並確認，不以模擬推播服務的通過結果宣稱已送達。
+2026-10-30：修正部署至測試 Worker 後，帳戶持有人重新按「發送測試通知」，已明確回覆「手機已收到通知」。因此獨立測試環境的 iPhone 訂閱、真實 D1 保存、加密發送及實際通知送達流程已完成一次實機驗證。這不代表正式 Worker 合併、正式 D1 相容性或背景 Spotify Cron 已完成驗證。
 
 官方參考：[Cloudflare Request redirect](https://developers.cloudflare.com/workers/runtime-apis/request/)、[CSP Level 3](https://www.w3.org/TR/CSP3/)。

@@ -1,5 +1,7 @@
 # v5.2 獨立測試部署（2026-10-30）
 
+更新：已設定獨立測試通行碼並登記裝置。修正 CSP 與 Workers redirect 相容性後，帳戶持有人已確認 iPhone 實際收到測試通知。詳見 [NOTIFICATION-FIXES.md](NOTIFICATION-FIXES.md)。下方初次部署時的健康檢查是歷史快照；正式環境整合與背景 Spotify 仍未啟用。
+
 測試網址：https://ling-v52-staging-20261030.eric233525.workers.dev/
 
 - Worker：`ling-v52-staging-20261030`
