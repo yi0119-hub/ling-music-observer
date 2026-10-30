@@ -172,7 +172,21 @@ export async function handleLingBackground(request,env){
   if(!env.DB||!env.LING_ACCESS_CODE)return reply({error:'缺少 D1 或通行碼設定'},503);
   if(!await validAccess(request.headers.get('X-Ling-Access-Code'),env.LING_ACCESS_CODE))return reply({error:'通行碼不正確'},401);
   if(!String(request.headers.get('Content-Type')||'').startsWith('application/json'))return reply({error:'需要 JSON 格式'},415);
-  const raw=await request.text();if(raw.length>4200)return reply({error:'請求太長'},413);
+  // Cap the streamed request before decoding: no unbounded request.text() allocation.
+  if(Number(request.headers.get('Content-Length')||0)>4200)return reply({error:'請求太長'},413);
+  const reader=request.body?.getReader();
+  if(!reader)return reply({error:'JSON 無效'},400);
+  let total=0;const chunks=[];
+  try{
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      total+=value.byteLength;
+      if(total>4200){await reader.cancel();return reply({error:'請求太長'},413);}
+      chunks.push(value);
+    }
+  }finally{reader.releaseLock();}
+  const raw=dec.decode(cat(...chunks));
   let input;try{input=JSON.parse(raw);}catch{return reply({error:'JSON 無效'},400);}
   if(!input||typeof input.action!=='string'||!input.action.startsWith('bg_'))return reply({error:'未知操作'},400);
   try{
