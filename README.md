@@ -1,3 +1,5 @@
+> **2026-10-30：v5.2 已依使用者授權正式上線。** PR #4 已合併，正式 Worker 與兩分鐘排程已發佈，原聊天與記憶保留。最新紀錄見 [正式發佈紀錄](cloudflare/PRODUCTION-RELEASE.md)。以下包含發佈前的歷史準備紀錄。
+
 # 玲的音樂觀察室 (Ling's Music Corner) — iPhone / Android 版本
 
 Spotify 區是無需 Node.js 的前端展示功能，採用官方 Web API + OAuth Authorization Code with PKCE，適合在 Safari / Chrome 或加到手機主畫面使用。網頁下方的「和玲聊聊」則是另一個獨立的 Cloudflare Worker + D1 功能，兩者不交換 Spotify 歌曲資料。
@@ -89,3 +91,4 @@ Spotify 區是無需 Node.js 的前端展示功能，採用官方 Web API + OAut
 - **手機與無障礙**：保留底部分頁、大字與觸控目標；小螢幕隱藏部分背景佈景空間，並遵守降低動態效果偏好。
 
 此主題目前只在 `feature/mobile-tab-layout-v5` 修改分支與草稿 PR #2，沒有直接覆蓋正式版；發布前還需透過實際 iPhone / 桌面瀏覽器檢查視覺溢出、Spotify 授權回跳與聊天輸入流程。
+

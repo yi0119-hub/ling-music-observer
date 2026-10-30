@@ -1,3 +1,5 @@
+> **2026-10-30：v5.2 已依使用者授權正式上線。** PR #4 已合併，正式 Worker 與兩分鐘排程已發佈，原聊天與記憶保留。最新紀錄見 [正式發佈紀錄](PRODUCTION-RELEASE.md)。以下包含發佈前的歷史準備紀錄。
+
 # 玲 v5.2 Cloudflare 開發與上線準備
 
 目前正式 v5.1、正式 Worker、D1 和 main 均未修改。[完整驗證與回復紀錄](RELEASE-READINESS.md)。
