@@ -45,18 +45,19 @@ function securePushUrl(raw){
   if(u.protocol!=='https:'||u.username||u.password||u.hash||!allowedPushHost(u.hostname)||raw.length>2200)throw Error('Untrusted push endpoint');
   return u;
 }
-async function getVapid(db,env){
-  let pub=await get(db,'vapid_public');
-  if(pub)return pub;
+async function getVapidBundle(db,env){
+  // One atomic row prevents concurrent first-time registrations from mixing key pairs.
+  const existing=await get(db,'vapid_bundle');
+  if(existing)return JSON.parse(existing);
   const pair=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
-  const raw=b64(await crypto.subtle.exportKey('raw',pair.publicKey));
-  const secret=await seal(env,JSON.stringify(await crypto.subtle.exportKey('jwk',pair.privateKey)));
-  // Only one initial caller should create the keys.
-  await db.batch([
-    db.prepare('INSERT OR IGNORE INTO ling_v4_settings(key,value) VALUES(?,?)').bind('vapid_private',secret),
-    db.prepare('INSERT OR IGNORE INTO ling_v4_settings(key,value) VALUES(?,?)').bind('vapid_public',raw)
-  ]);
-  return get(db,'vapid_public');
+  const value=JSON.stringify({
+    publicKey:b64(await crypto.subtle.exportKey('raw',pair.publicKey)),
+    sealedPrivateKey:await seal(env,JSON.stringify(await crypto.subtle.exportKey('jwk',pair.privateKey)))
+  });
+  await db.prepare('INSERT OR IGNORE INTO ling_v4_settings(key,value) VALUES(?,?)').bind('vapid_bundle',value).run();
+  const stored=await get(db,'vapid_bundle');
+  if(!stored)throw Error('VAPID initialization failed');
+  return JSON.parse(stored);
 }
 async function hkdf(key,salt,info,n){
   const k=await crypto.subtle.importKey('raw',key,'HKDF',false,['deriveBits']);
@@ -84,10 +85,12 @@ async function vapidJwt(priv,pushOrigin){
   return header+'.'+body+'.'+b64(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},k,bytes(header+'.'+body)));
 }
 async function sendAll(db,env,data){
-  const pub=await get(db,'vapid_public'),privateText=await get(db,'vapid_private');
-  if(!pub||!privateText)return {accepted:0,total:0};
+  const stored=await get(db,'vapid_bundle');
+  if(!stored)return {accepted:0,total:0};
+  const bundle=JSON.parse(stored);
+  const pub=bundle.publicKey;
   const subs=(await db.prepare('SELECT endpoint,p256dh,auth FROM ling_v4_push LIMIT 12').all()).results||[];
-  const privateKey=JSON.parse(await unseal(env,privateText));
+  const privateKey=JSON.parse(await unseal(env,bundle.sealedPrivateKey));
   let accepted=0;
   for(const sub of subs){
     try{
@@ -160,7 +163,7 @@ async function dailyCheck(db,env){
   const changed=await db.prepare('INSERT INTO ling_v4_dispatch(name,last_date) VALUES (?,?) ON CONFLICT(name) DO UPDATE SET last_date=excluded.last_date WHERE last_date<>excluded.last_date').bind('daily-checkin',date).run();
   if(!changed.meta?.changes)return;
   const msg='老大，今天過得怎麼樣？有空來音樂觀察室聊聊吧。';
-  await db.prepare("INSERT INTO messages(role,content) VALUES('assistant',?)").bind(msg).run();
+  // Do not write into the existing chat schema: this reminder is push-only.
   await sendAll(db,env,{title:'玲來打個招呼',body:msg,tag:'ling-daily'});
 }
 
@@ -180,7 +183,7 @@ export async function handleLingBackground(request,env){
       return reply({ok:true,pushSubscriptions:Number(n),songEnabled:await get(db,'spotify_enabled')==='yes',
         songPush:await get(db,'push_song')==='yes',dailyPush:await get(db,'push_daily')==='yes',pollMinutes:10});
     }
-    if(action==='bg_vapid')return reply({ok:true,publicKey:await getVapid(db,env)});
+    if(action==='bg_vapid')return reply({ok:true,publicKey:(await getVapidBundle(db,env)).publicKey});
     if(action==='bg_subscribe'){
       const {endpoint,keys}=input.subscription||{};
       if(typeof endpoint!=='string'||!keys||typeof keys.p256dh!=='string'||typeof keys.auth!=='string'||keys.p256dh.length>250||keys.auth.length>100)throw Error('推播訂閱格式錯誤');
