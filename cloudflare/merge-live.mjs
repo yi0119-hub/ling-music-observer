@@ -4,6 +4,7 @@
  */
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {mergeWorkerSource} from './merge-engine.mjs';
 const account=process.env.CLOUDFLARE_ACCOUNT_ID;
 const token=process.env.CLOUDFLARE_AUDIT_TOKEN;
 const name='still-sea-162cling-shared-core';
@@ -26,40 +27,7 @@ if(kind.includes('multipart/form-data')){
  source=await response.text();
 }else throw Error('Unexpected live code MIME: '+kind.split(';')[0]);
 const originalHash=createHash('sha256').update(source).digest('hex');
-const count=(source.match(/export\s+default\s*\{/g)||[]).length;
-if(count!==1)throw Error('Unknown live Worker export shape, refusing to merge.');
-if(source.includes('handleLingBackground')||source.includes('runLingBackground'))throw Error('Background module already present.');
-const patched=source.replace(/export\s+default\s*\{/,'const __lingOriginalWorker = {');
-const wrapper=[
-  'export default {',
-  '  async fetch(request,env,ctx){',
-  "    if(request.method==='POST'&&new URL(request.url).pathname==='/'){",
-  '      if(Number(request.headers.get("Content-Length")||0)>4200)return __lingOriginalWorker.fetch(request,env,ctx);',
-  '      const copy=request.clone();',
-  '      const body=await copy.text();',
-  '      if(body.length<=4200){',
-  '        try{',
-  '          const data=JSON.parse(body);',
-  "          if(data&&typeof data.action==='string'&&data.action.startsWith('bg_')){",
-  '            return handleLingBackground(request,env);',
-  '          }',
-  '        }catch{}',
-  '      }',
-  '    }',
-  '    return __lingOriginalWorker.fetch(request,env,ctx);',
-  '  },',
-  '  async scheduled(controller,env,ctx){',
-  "    if(['*/10 * * * *','0 12 * * *'].includes(controller.cron))",
-  '      ctx.waitUntil(runLingBackground(controller.cron,env));',
-  "    if(typeof __lingOriginalWorker.scheduled==='function')",
-  '      return __lingOriginalWorker.scheduled(controller,env,ctx);',
-  '  }',
-  '};'
-].join('\n');
-const combined=[
-  "import {handleLingBackground,runLingBackground} from '../ling-background-addon.js';",
-  patched,wrapper
-].join('\n');
+const combined=mergeWorkerSource(source);
 const dir='cloudflare/.generated';
 fs.mkdirSync(dir,{recursive:true});
 fs.writeFileSync(dir+'/worker.merged.js',combined,{mode:0o600});
