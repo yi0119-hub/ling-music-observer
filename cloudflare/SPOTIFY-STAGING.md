@@ -1,5 +1,7 @@
 # Spotify 背景查詢：獨立測試版
 
+部署紀錄：測試程式版本 `7d90afa7` 已啟用；Dashboard 已儲存並顯示 `Every 10 minutes` 的 Cron（僅此測試 Worker）。帳戶持有人已確認新增 Redirect URI。Spotify 帳號仍需由本人在頁面完成授權與啟用，這兩個動作不能由部署紀錄代替。
+
 測試網址與 Redirect URI（完整相同，包含結尾 `/`）：
 
 `https://ling-v52-staging-20261030.eric233525.workers.dev/`

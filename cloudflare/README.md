@@ -24,7 +24,7 @@ GitHub 手動 Workflow 只會在它已進入預設 `main` 分支後出現。PR �
 
 ## v5.2 離線開發驗證
 
-目前開發檢查共 30 項測試，涵蓋加密、訂閱、背景查詢、授權競態、合併預覽及獨立測試入口。詳見 [V5.2-VALIDATION.md](V5.2-VALIDATION.md)。這些測試不需要 Cloudflare 憑證。
+目前開發檢查共 42 項測試，涵蓋加密、訂閱、背景查詢、授權競態、合併預覽、獨立測試入口與 Spotify PKCE。詳見 [V5.2-VALIDATION.md](V5.2-VALIDATION.md) 及 [SPOTIFY-STAGING.md](SPOTIFY-STAGING.md)。這些測試不需要 Cloudflare 憑證。
 
 使用既有唯讀稽核的私有 Worker 原始碼產生離線預覽：
 
