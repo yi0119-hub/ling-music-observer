@@ -4,6 +4,14 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import worker from './staging.worker.mjs';
 const root='https://ling-v52-staging-20261030.example.workers.dev';
+test('page CSP explicitly allows its own service worker without external worker sources',async()=>{
+  const response=await worker.fetch(new Request(root),{});
+  const directives=Object.fromEntries(response.headers.get('Content-Security-Policy').split(';').map(s=>{const [name,...values]=s.trim().split(/\s+/);return [name,values];}));
+  assert.deepEqual(directives['worker-src'],["'self'"]);
+  const sw=await worker.fetch(new Request(root+'/sw.js'),{});
+  assert.equal(sw.status,200);
+  assert.equal(sw.headers.get('Content-Type'),'application/javascript');
+});
 test('staging health distinguishes missing setup and never touches chat data',async()=>{
   assert.equal((await worker.fetch(new Request(root+'/health'),{})).status,503);
   const response=await worker.fetch(new Request(root+'/health'),{LING_ACCESS_CODE:'x'.repeat(40),DB:{prepare(sql){assert.equal(sql,'SELECT 1 AS ok');return {async first(){return {ok:1};}};}}});

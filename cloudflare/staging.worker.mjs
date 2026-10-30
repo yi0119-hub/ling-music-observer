@@ -14,7 +14,7 @@ const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Re
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
-    if(url.pathname==='/')return new Response(page,{headers:{...headers,'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"}});
+    if(url.pathname==='/')return new Response(page,{headers:{...headers,'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'self'; script-src 'unsafe-inline'; worker-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"}});
     if(url.pathname==='/sw.js')return new Response(serviceWorker,{headers:{...headers,'Content-Type':'application/javascript','Service-Worker-Allowed':'/'}});
     if(url.pathname==='/manifest.webmanifest')return Response.json({name:'玲 v5.2 通知測試室',short_name:'玲測試室',id:'/',start_url:'/',scope:'/',display:'standalone',background_color:'#17132b',theme_color:'#17132b'},{headers});
     if(url.pathname==='/health'){
