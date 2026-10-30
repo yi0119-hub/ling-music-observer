@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ling-memory-sync",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-10-30",
+  "workers_dev": true,
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "ling_memory",
+    "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+    "migrations_dir": "migrations"
+  }],
+  "vars": {
+    "MODE": "read_only",
+    "GOOGLE_DRIVE_FOLDER_ID": "",
+    "NOTION_PARENT_PAGE_ID": ""
+  },
+  "triggers": {
+    "crons": ["0 15 * * *", "0 11 * * SUN"]
+  },
+  "observability": { "enabled": true }
+}

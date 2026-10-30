@@ -1,0 +1,16 @@
+{
+  "name": "ling-memory-sync-worker",
+  "private": true,
+  "version": "0.4.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "dev": "wrangler dev --test-scheduled",
+    "db:local": "wrangler d1 migrations apply ling_memory --local",
+    "db:remote": "wrangler d1 migrations apply ling_memory --remote",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
