@@ -92,3 +92,14 @@ test('daily reminder never inserts into existing chat tables',async()=>{
   assert.equal(statements.some(sql=>/\bINSERT\s+INTO\s+messages\b/i.test(sql)),false);
   assert.equal(statements.some(sql=>/ling_v4_dispatch/.test(sql)),true);
 });
+
+
+test('oversized background payload is rejected before database access',async()=>{
+  const huge='x'.repeat(5000);
+  const request=req('bg_config',{}, {extra:huge});
+  const response=await handleLingBackground(request,{
+    DB:{prepare(){throw Error('Database should not be touched by oversized request');}},
+    LING_ACCESS_CODE:ACCESS
+  });
+  assert.equal(response.status,413);
+});
