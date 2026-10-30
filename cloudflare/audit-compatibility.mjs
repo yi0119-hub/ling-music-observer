@@ -18,7 +18,7 @@ catch(error){if(error.code!=='ENOENT')throw error;createOfflinePreview(source,ou
 const original=(await import(pathToFileURL(sourcePath))).default;
 const candidate=resolve(output,'worker.candidate.mjs');
 await writeFile(candidate,mergeWorkerSource(source,{pollMinutes:2,daily:false}));
-const merged=(await import(pathToFileURL(candidate))).default;
+const merged=(await import(pathToFileURL(process.argv[3]?resolve(process.argv[3]):candidate))).default;
 const databases=[];
 function env(){
   const sql=new DatabaseSync(':memory:');databases.push(sql);

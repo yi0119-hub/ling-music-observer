@@ -74,7 +74,7 @@
   btn('bgTest',async()=>{await call('bg_test_push');setMessage('推播服務已接受測試通知，請查看手機是否收到。');});
   btn('bgSavePref',async()=>{
     await call('bg_config',{daily:$('bgDaily').checked,songPush:$('bgSongPush').checked});
-    setMessage('推播偏好已保存：每日招呼約 20:00，歌曲變化最多每 15 分鐘提醒一次。');
+    setMessage('推播偏好已保存：歌曲變化最多每 15 分鐘提醒一次，23:00–09:00 不提醒。');
   });
   btn('bgEnableSpotify',async()=>{
     if(!$('bgConsent').checked)throw Error('請先閱讀並勾選背景授權說明。');
