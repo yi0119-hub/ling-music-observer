@@ -106,8 +106,9 @@ async function sendAll(db,env,data){
       const res=await fetch(endpoint.href,{method:'POST',headers:{
         Authorization:'vapid t='+jwt+', k='+pub,
         'Content-Encoding':'aes128gcm','Content-Type':'application/octet-stream','TTL':'3600'
-      },body,redirect:'error',signal:AbortSignal.timeout(10000)});
+      },body,redirect:'manual',signal:AbortSignal.timeout(10000)});
       if(res.ok)accepted++;
+      else console.warn('Web Push rejected with HTTP',res.status);
       if(res.status===404||res.status===410)await db.prepare('DELETE FROM ling_v4_push WHERE endpoint=?').bind(sub.endpoint).run();
     }catch(error){console.warn('Web Push send failure',String(error).slice(0,70));}
   }));
@@ -135,7 +136,7 @@ async function songCheck(db,env){
   const auth=await fetch('https://accounts.spotify.com/api/token',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:clientId}),
-    redirect:'error',signal:AbortSignal.timeout(10000)
+    redirect:'manual',signal:AbortSignal.timeout(10000)
   });
   if(!await active())return;
   if(!auth.ok){
@@ -154,7 +155,7 @@ async function songCheck(db,env){
   }
   if(!token.access_token)return;
   if(!await active())return;
-  const res=await fetch('https://api.spotify.com/v1/me/player/currently-playing',{headers:{Authorization:'Bearer '+token.access_token},redirect:'error',signal:AbortSignal.timeout(10000)});
+  const res=await fetch('https://api.spotify.com/v1/me/player/currently-playing',{headers:{Authorization:'Bearer '+token.access_token},redirect:'manual',signal:AbortSignal.timeout(10000)});
   if(!await active())return;
   if(res.status===204)return;
   if(res.status===429){
@@ -260,9 +261,9 @@ export async function handleLingBackground(request,env){
     }
     if(action==='bg_test_push'){
       const count=(await db.prepare('SELECT count(*) AS n FROM ling_v4_push').first())?.n||0;
-      if(!count)throw Error('尚未訂閱 iPhone 推播');
+      if(!count)return reply({error:'請先按「登記此裝置通知」，完成後再發送測試。',code:'PUSH_NOT_SUBSCRIBED'},409);
       const result=await sendAll(db,env,{title:'玲的通知測試',body:'老大，我從雲端送出通知了。',tag:'ling-test'});
-      if(!result.accepted)throw Error('推播服務未接受通知');
+      if(!result.accepted)return reply({error:'通知尚未送出，推播服務未接受請求，請稍後再試。',code:'PUSH_NOT_ACCEPTED'},502);
       return reply({ok:true,accepted:result.accepted});
     }
     return reply({error:'未知背景操作'},400);

@@ -178,6 +178,28 @@ test('expired Spotify grant disables polling and removes stored refresh token',a
 });
 
 const encode=x=>Buffer.from(x).toString('base64url');
+test('test notification without registered devices returns an actionable message',async()=>{
+  const {db}=fakeD1();
+  const response=await handleLingBackground(req('bg_test_push'),{DB:db,LING_ACCESS_CODE:ACCESS});
+  assert.equal(response.status,409);
+  const body=await response.json();
+  assert.equal(body.code,'PUSH_NOT_SUBSCRIBED');
+  assert.match(body.error,/登記此裝置通知/);
+});
+
+for(const stage of ['token','player'])test(`Spotify ${stage} redirects are not followed or treated as valid authorization`,async t=>{
+  const {env,state}=await spotifyFixture(t);let calls=0;
+  globalThis.fetch=async(url,options)=>{
+    calls++;assert.equal(options.redirect,'manual');
+    if(stage==='player'&&String(url).includes('/api/token'))return Response.json({access_token:'test'});
+    return new Response(null,{status:307,headers:{Location:'https://untrusted.example/'}});
+  };
+  await runLingBackground('*/10 * * * *',env);
+  assert.equal(calls,stage==='token'?1:2);
+  assert.equal(state.get('spotify_enabled'),'yes');
+  assert.equal(state.has('spotify_last'),false);
+});
+
 test('subscription rejects invalid points, auth lengths and nonstandard endpoint ports before storage',async()=>{
   const {db,statements}=fakeD1();
   const env={DB:db,LING_ACCESS_CODE:ACCESS};
@@ -207,10 +229,12 @@ test('Web Push decrypts with receiver keys and VAPID signature verifies; gone en
     return prepare(sql);
   };
   const previous=globalThis.fetch;t.after(()=>{globalThis.fetch=previous;});
-  for(const status of [201,410]){
+  for(const status of [201,307,410]){
     globalThis.fetch=async(url,options)=>{
       assert.equal(url,endpoint);
-      assert.equal(options.redirect,'error');
+      // Workers only supports follow/manual; manual also prevents credentials
+      // being forwarded to a redirected endpoint. A 307 must stay a failure.
+      assert.equal(options.redirect,'manual');
       assert.equal(options.headers['Content-Encoding'],'aes128gcm');
       const token=options.headers.Authorization.match(/^vapid t=([^,]+), k=(.+)$/);
       assert.equal(token[2],vapid.publicKey);
@@ -235,7 +259,7 @@ test('Web Push decrypts with receiver keys and VAPID signature verifies; gone en
       assert.equal(JSON.parse(plain.subarray(0,-1)).tag,'ling-test');
       return new Response(null,{status});
     };
-    assert.equal((await handleLingBackground(req('bg_test_push'),env)).status,status===201?200:503);
+    assert.equal((await handleLingBackground(req('bg_test_push'),env)).status,status===201?200:502);
   }
   assert.ok(statements.includes('DELETE FROM ling_v4_push WHERE endpoint=?'));
 });
