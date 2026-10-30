@@ -52,7 +52,7 @@ footer { text-align:center; padding:25px 0 3px; color:#9188ad; font-size:11px; }
 .chat-card { margin-top:17px; padding:23px 21px; border:1px solid #534771; border-radius:24px; background:linear-gradient(160deg,#24213b,#171b2c 64%); }
 .chat-card .section-heading h2 {font-size:17px; margin:0; }
 .chat-config {border:1px solid #3e3955; border-radius:15px; padding:3px 14px 13px; margin:18px 0; background:#101324aa;}
-.chat-config input {display:block; width:100%; padding:12px; border-radius:11px; background:#0c1020; border:1px solid #50536a; color:white; outline:none; font-size:13px;}
+.chat-config input:not([type="checkbox"]) {display:block; width:100%; padding:12px; border-radius:11px; background:#0c1020; border:1px solid #50536a; color:white; outline:none; font-size:13px;}
 .chat-config input:focus, .chat-form textarea:focus {border-color:var(--accent);}
 .chat-log {height:245px; overflow-y:auto; display:flex; flex-direction:column; gap:11px; padding:13px; border:1px solid #514866; border-radius:15px; background:#0d1020;}
 .chat-line {max-width:90%; border-radius:13px; padding:10px 13px; font-size:13px; line-height:1.7; overflow-wrap:anywhere; white-space:pre-wrap;}
@@ -223,7 +223,7 @@ body {
 .settings-layout .chat-settings { margin-top:17px; }
 .settings-layout .chat-config { margin:10px 0 0; }
 .settings-layout .footer-card { background:transparent; }
-.settings-card input, .chat-config input { min-height:46px; }
+.settings-card input:not([type="checkbox"]), .chat-config input:not([type="checkbox"]) { min-height:46px; }
 @media(min-width:860px) {
   .music-layout {
     display:grid;
@@ -511,7 +511,7 @@ body {
 .settings-card {background:#2d2639;border-color:#796078;}
 .settings-layout .footer-card {background:#211c2d;}
 .chat-config {background:#1f1a2b;border-color:#68546b;}
-.chat-config input,.chat-card textarea,.settings-card input[type=text] {background:#201b2a;border-color:#866c7f;color:#fff5ef;}
+.chat-config input:not([type="checkbox"]),.chat-card textarea,.settings-card input[type=text] {background:#201b2a;border-color:#866c7f;color:#fff5ef;}
 label {color:#f5e5e2;}
 footer {color:#c3a3b7;font-style:italic;}
 @media(max-width:700px) {
@@ -531,4 +531,65 @@ footer {color:#c3a3b7;font-style:italic;}
 }
 @media(prefers-reduced-motion:reduce) {
   .btn {transition:none;}
+}
+
+/* v5.1.1 · iPhone compact connection settings; do not style checkboxes as text fields */
+.chat-config .checkline input[type="checkbox"],
+.settings-card .checkline input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  box-sizing: border-box;
+  display: inline-block;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  max-width: 18px;
+  padding: 0;
+  margin: 2px 0 0;
+  border-radius: 4px;
+  accent-color: #cfacc4;
+}
+.chat-config .checkline span,
+.settings-card .checkline span { min-width: 0; flex: 1; }
+@media (max-width: 700px) {
+  .settings-layout .settings-card {
+    padding: 17px 15px;
+    margin-top: 12px;
+  }
+  .settings-layout .chat-config {
+    margin-top: 10px;
+    padding: 10px 12px 12px;
+    border-radius: 14px;
+  }
+  .settings-layout .chat-config label:not(.checkline) {
+    margin: 10px 0 5px;
+    font-size: 12px;
+  }
+  .settings-layout .chat-config input:not([type="checkbox"]) {
+    min-height: 42px;
+    padding: 9px 11px;
+    font-size: 14px;
+  }
+  .settings-layout .chat-config .checkline {
+    align-items: flex-start;
+    gap: 10px;
+    margin: 12px 0 9px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .settings-layout .chat-config .actions {
+    margin-top: 10px !important;
+    gap: 8px;
+  }
+  .settings-layout .chat-config .btn {
+    min-height: 42px;
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+  .settings-layout .chat-config .hint {
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 10px 0 8px;
+  }
 }
