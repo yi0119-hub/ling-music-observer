@@ -8,6 +8,8 @@ import {mergeWorkerSource} from './merge-engine.mjs';
 const original = [
   '// Original chat Worker: leave all existing handlers and bindings intact.',
   'export default {',
+  "  marker: 'original',",
+  "  queue(){return this.marker;},",
   '  async fetch(request, env) {',
   "    globalThis.__lingMockChatHits = (globalThis.__lingMockChatHits || 0) + 1;",
   "    return new Response('original-chat: ' + new URL(request.url).pathname + ':' + request.method);",
@@ -28,6 +30,7 @@ test('existing chat remains unchanged, background uses only a separate API path'
   t.after(async()=>rm(dir,{recursive:true,force:true}));
   await writeFile(join(dir,'worker.mjs'),mergeWorkerSource(original));
   const worker=(await import(pathToFileURL(join(dir,'worker.mjs')).href)).default;
+  assert.equal(worker.queue(),'original');
   globalThis.__lingMockChatHits=0;
   const root='https://example.workers.dev';
   const make=(path,method,headers={})=>new Request(root+path,{method,headers,
@@ -58,3 +61,4 @@ test('existing chat remains unchanged, background uses only a separate API path'
   await worker.scheduled({cron:'0 5 * * *'},{},{waitUntil(){}});
   assert.equal(globalThis.__lingMockCron,'0 5 * * *');
 });
+

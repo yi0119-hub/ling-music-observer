@@ -42,7 +42,7 @@ const allowedPushHost = hostname => hostname==='web.push.apple.com'||hostname.en
   hostname==='fcm.googleapis.com'||hostname==='updates.push.services.mozilla.com';
 function securePushUrl(raw){
   const u=new URL(raw);
-  if(u.protocol!=='https:'||u.username||u.password||u.hash||!allowedPushHost(u.hostname)||raw.length>2200)throw Error('Untrusted push endpoint');
+  if(u.protocol!=='https:'||u.port||u.username||u.password||u.hash||!allowedPushHost(u.hostname)||raw.length>2200)throw Error('Untrusted push endpoint');
   return u;
 }
 async function getVapidBundle(db,env){
@@ -65,7 +65,7 @@ async function hkdf(key,salt,info,n){
 }
 async function payloadFor(sub,data){
   const client=un64(sub.p256dh),auth=un64(sub.auth);
-  if(client.length!==65||auth.length<16)throw Error('Bad push keys');
+  if(client.length!==65||client[0]!==4||auth.length!==16)throw Error('Bad push keys');
   const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
   const ephemeral=new Uint8Array(await crypto.subtle.exportKey('raw',pair.publicKey));
   const publicKey=await crypto.subtle.importKey('raw',client,{name:'ECDH',namedCurve:'P-256'},false,[]);
@@ -100,7 +100,7 @@ async function sendAll(db,env,data){
       const res=await fetch(endpoint.href,{method:'POST',headers:{
         Authorization:'vapid t='+jwt+', k='+pub,
         'Content-Encoding':'aes128gcm','Content-Type':'application/octet-stream','TTL':'3600'
-      },body});
+      },body,redirect:'error'});
       if(res.ok)accepted++;
       if(res.status===404||res.status===410)await db.prepare('DELETE FROM ling_v4_push WHERE endpoint=?').bind(sub.endpoint).run();
     }catch(error){console.warn('Web Push send failure',String(error).slice(0,70));}
@@ -110,6 +110,10 @@ async function sendAll(db,env,data){
 function taipei(){
   const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).map(x=>[x.type,x.value]));
   return {date:p.year+'-'+p.month+'-'+p.day,hour:Number(p.hour)};
+}
+function retryAt(response){
+  const seconds=Number(response.headers.get('Retry-After'));
+  return Date.now()+Math.max(600,Number.isFinite(seconds)&&seconds>0?seconds:600)*1000;
 }
 async function songCheck(db,env){
   if(await get(db,'spotify_enabled')!=='yes')return;
@@ -124,8 +128,9 @@ async function songCheck(db,env){
   if(!auth.ok){
     if([400,401].includes(auth.status)){
       await set(db,'spotify_enabled','no');
+      await del(db,'spotify_token');
       await sendAll(db,env,{title:'玲的音樂觀察室',body:'Spotify 背景授權已失效，請重新授權。',tag:'ling-auth'});
-    }else if(auth.status===429)await set(db,'spotify_backoff_until',Date.now()+3600000);
+    }else if(auth.status===429)await set(db,'spotify_backoff_until',retryAt(auth));
     return;
   }
   const token=await auth.json();
@@ -139,8 +144,7 @@ async function songCheck(db,env){
       await set(db,'spotify_enabled','no');
       await sendAll(db,env,{title:'玲的音樂觀察室',body:'Spotify 配額受限，已暫停背景偵測。',tag:'ling-quota'});
     }else {
-      const seconds=Number(res.headers.get('Retry-After'))||600;
-      await set(db,'spotify_backoff_until',Date.now()+Math.max(600,Math.min(86400,seconds))*1000);
+      await set(db,'spotify_backoff_until',retryAt(res));
     }
     return;
   }
@@ -202,6 +206,10 @@ export async function handleLingBackground(request,env){
       const {endpoint,keys}=input.subscription||{};
       if(typeof endpoint!=='string'||!keys||typeof keys.p256dh!=='string'||typeof keys.auth!=='string'||keys.p256dh.length>250||keys.auth.length>100)throw Error('推播訂閱格式錯誤');
       securePushUrl(endpoint);
+      if(!/^[A-Za-z0-9_-]+$/.test(keys.p256dh)||!/^[A-Za-z0-9_-]+$/.test(keys.auth))throw Error('Bad push keys');
+      const publicKey=un64(keys.p256dh),authSecret=un64(keys.auth);
+      if(publicKey.length!==65||publicKey[0]!==4||authSecret.length!==16)throw Error('Bad push keys');
+      await crypto.subtle.importKey('raw',publicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
       await db.prepare('INSERT OR REPLACE INTO ling_v4_push(endpoint,p256dh,auth) VALUES(?,?,?)').bind(endpoint,keys.p256dh,keys.auth).run();
       return reply({ok:true});
     }
@@ -246,3 +254,4 @@ export async function runLingBackground(cron,env){
   if(cron==='*/10 * * * *')await songCheck(env.DB,env);
   if(cron==='0 12 * * *')await dailyCheck(env.DB,env);
 }
+

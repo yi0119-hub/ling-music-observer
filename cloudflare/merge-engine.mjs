@@ -12,6 +12,7 @@ export function mergeWorkerSource(source) {
   const original = source.replace(/export\s+default\s*\{/, 'const __lingOriginalWorker = {');
   const bgWrapper = [
     'export default {',
+    '  ...__lingOriginalWorker,',
     '  async fetch(request, env, ctx) {',
     '    const path = new URL(request.url).pathname;',
     "    if (path === '/ling-bg') {",
@@ -45,3 +46,4 @@ export function mergeWorkerSource(source) {
     original, bgWrapper
   ].join('\n\n');
 }
+
