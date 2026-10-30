@@ -1,0 +1,9 @@
+# Private audit sources and generated configurations must stay local.
+cloudflare/.generated/
+cloudflare/.merge-test-*/
+cloudflare/.offline-test-*/
+wrangler.generated.json
+.env
+.env.*
+.dev.vars
+.dev.vars.*

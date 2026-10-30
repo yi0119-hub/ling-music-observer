@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="玲的音樂觀察室" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://i.scdn.co https://*.scdn.co; connect-src https://accounts.spotify.com https://api.spotify.com https://*.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self'; img-src 'self' data: https://i.scdn.co https://*.scdn.co; connect-src https://accounts.spotify.com https://api.spotify.com https://*.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -16,6 +16,7 @@
   <script defer src="main.js?v=4"></script>
   <script defer src="chat.js?v=4"></script>
   <script defer src="ui.js?v=5"></script>
+  <script defer src="background.js?v=5-2-release"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -178,6 +179,34 @@
           <p class="status" id="chatConnectedLabel">未連接共用核心</p>
         </div>
       </section>
+
+      <details class="settings-card bg-feature" id="bgFeature">
+        <summary><span class="bg-summary-title">☁ 背景偵測與通知</span><span class="bg-summary-extra">點開設定推播與背景查詢</span></summary>
+        <p class="hint">這是自選功能，預設關閉。雲端每 2 分鐘查詢 Spotify 的目前播放狀態，不保證抓到每次切歌，資料不會送進 AI。</p>
+        <div class="bg-feature-actions">
+          <button id="bgStatus" class="btn btn-secondary" type="button">讀取雲端設定</button>
+          <button id="bgSubscribe" class="btn btn-primary" type="button">允許 iPhone 推播</button>
+          <button id="bgTest" class="btn btn-secondary" type="button">測試通知</button>
+          <button id="bgUnsubscribe" class="btn btn-quiet" type="button">取消這台裝置推播</button>
+        </div>
+        <p class="status" id="bgPushStatus">請從 iPhone 主畫面圖示開啟網站，才能允許推播。</p>
+        <label class="checkline"><input id="bgDaily" type="checkbox" disabled /><span>每日固定問候（尚未開放）</span></label>
+        <label class="checkline"><input id="bgSongPush" type="checkbox" /><span>歌曲狀態變化時推播提示（最多每 15 分鐘一次，23:00–09:00 靜音）</span></label>
+        <button id="bgSavePref" class="btn btn-secondary" type="button">儲存通知偏好</button>
+        <div class="bg-spotify-panel">
+          <h3>Spotify 雲端背景查詢</h3>
+          <p class="hint">這需要明確授權將 Spotify 的更新令牌傳送到自己的 Cloudflare Worker 並加密儲存在 D1；不會建立播放歷史，也不會把歌曲名稱送給 AI。授權失效後需重新登入。</p>
+          <label class="checkline"><input id="bgConsent" type="checkbox" /><span>我同意將 Spotify 更新授權加密保存在個人 Cloudflare 後端，用於背景查詢</span></label>
+          <div class="bg-feature-actions">
+            <button id="bgEnableSpotify" class="btn btn-primary" type="button">啟用背景歌曲偵測</button>
+            <button id="bgDisableSpotify" class="btn btn-quiet" type="button">停用並刪除授權</button>
+          </div>
+          <p class="status" id="bgSpotifyStatus">尚未啟用背景查詢。</p>
+        </div>
+        <p class="status" id="bgMessage" role="status" aria-live="polite">請先在上方連接玲的共用核心。</p>
+        <p class="note">首次使用請允許推播並測試通知，再勾選歌曲提醒及儲存偏好，最後同意並啟用背景查詢。</p>
+      </details>
+
       <section class="footer-card">
         <h2>這一版的界線</h2>
         <p>只顯示 Spotify 目前播放與最近播放（最多 20 筆）；不另外永久儲存 Spotify 播放歷史、不建立聆聽者分析，也不將 Spotify 內容交給 AI 模型。你可以隨時用「清除本機授權」刪除這台裝置儲存的令牌。</p>
@@ -189,3 +218,4 @@
   </div>
 </body>
 </html>
+
