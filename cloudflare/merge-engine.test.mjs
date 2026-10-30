@@ -27,6 +27,21 @@ test('refuse unknown or already patched live Worker structure',()=>{
   assert.throws(()=>mergeWorkerSource(original+' // handleLingBackground'),/already installed/i);
 });
 
+test('two-minute candidate dispatches only its approved job and retains the original scheduler',async t=>{
+  assert.throws(()=>mergeWorkerSource(original,{pollMinutes:1.5}),/Unsupported/);
+  const dir=await mkdtemp(join(dirname(fileURLToPath(import.meta.url)),'.merge-test-'));
+  t.after(async()=>rm(dir,{recursive:true,force:true}));
+  await writeFile(join(dir,'worker.mjs'),mergeWorkerSource(original,{pollMinutes:2,daily:false}));
+  await writeFile(join(dir,'worker.original.mjs'),original);
+  const worker=(await import(pathToFileURL(join(dir,'worker.mjs')).href)).default;
+  const pending=[];const ctx={waitUntil(p){pending.push(p);}};
+  for(const cron of ['*/10 * * * *','0 12 * * *','0 5 * * *']){
+    await worker.scheduled({cron},{},ctx);assert.equal(globalThis.__lingMockCron,cron);
+  }
+  assert.equal(pending.length,0);
+  await worker.scheduled({cron:'*/2 * * * *'},{},ctx);assert.equal(pending.length,1);await Promise.all(pending);
+});
+
 test('existing chat remains unchanged, background uses only a separate API path',async t=>{
   const dir=await mkdtemp(join(dirname(fileURLToPath(import.meta.url)),'.merge-test-'));
   t.after(async()=>rm(dir,{recursive:true,force:true}));

@@ -1,24 +1,30 @@
 import fs from 'node:fs';
-const fail = message => { console.error(message); process.exit(1); };
-// Deliberately missing until the live Cloudflare Worker has been backed up and reviewed.
-const main = 'cloudflare/worker.reviewed.js';
-if (!fs.existsSync(main)) fail('BLOCKED: worker.reviewed.js missing. Backup and reconcile live Worker before release.');
-const name = (process.env.LING_WORKER_NAME || '').trim();
-const d1name = (process.env.LING_D1_DATABASE_NAME || '').trim();
-const d1id = (process.env.LING_D1_DATABASE_ID || '').trim();
-if (!/^[a-z][a-z0-9-]{2,62}$/.test(name)) fail('Invalid/missing LING_WORKER_NAME; must match the LIVE Worker.');
-if (!/^[a-zA-Z0-9_-]{1,128}$/.test(d1name)) fail('Invalid/missing LING_D1_DATABASE_NAME.');
-if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d1id)) fail('Invalid/missing LING_D1_DATABASE_ID.');
-const code = fs.readFileSync(main, 'utf8');
-if (!code.includes('async scheduled(') || !code.includes('export default')) fail('Reviewed Worker lacks expected scheduled/fetch handler.');
-const config = {
-  name,
-  main,
-  compatibility_date: '2026-10-30',
-  keep_vars: true,
-  d1_databases: [{binding:'DB',database_name:d1name,database_id:d1id}],
-  triggers: { crons: ['*/10 * * * *', '0 12 * * *'] },
-  secrets: { required: ['OPENAI_API_KEY', 'LING_ACCESS_CODE'] }
-};
-fs.writeFileSync('wrangler.generated.json', JSON.stringify(config, null, 2));
-console.log('Prepared guarded deployment for exact existing Worker + D1 + two UTC cron triggers.');
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+// Never reconstruct a live configuration from its DB binding alone.
+export function validateRelease(config,review,source,backup,expected){
+  const hash=value=>createHash('sha256').update(value).digest('hex');
+  if(!config||!review||review.productionApproved!==true)throw Error('Production approval missing');
+  if(config.name!==expected.name||!expected.name)throw Error('Worker name mismatch');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(config.compatibility_date||''))throw Error('Reviewed compatibility date missing');
+  if(config.keep_vars!==true)throw Error('Existing variables must be retained');
+  if(!expected.databaseId||!expected.databaseName||!config.d1_databases?.some(x=>x.binding==='DB'&&x.database_id===expected.databaseId&&x.database_name===expected.databaseName))throw Error('D1 binding mismatch');
+  if(review.bundleInputsSha256!==hash(source)||review.configSha256!==hash(JSON.stringify(config))||review.backupSha256!==hash(backup))throw Error('Review hashes mismatch');
+  if(!review.originalVersion||!review.d1Bookmark||review.settingsPreserved!==true||review.compatibilityPassed!==true||review.restoreRehearsalPassed!==true||review.songNotificationVerified!==true)throw Error('Release evidence incomplete');
+  const age=Date.now()-Date.parse(review.reviewedAt);
+  if(!Number.isFinite(age)||age<0||age>24*60*60*1000)throw Error('Release review expired');
+  if(!config.triggers?.crons?.includes('*/2 * * * *'))throw Error('Approved two-minute schedule missing');
+  if(config.main!=='cloudflare/.generated/worker.candidate.mjs')throw Error('Reviewed candidate path required');
+  return config;
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  const dir='cloudflare/.generated';
+  const review=JSON.parse(fs.readFileSync(dir+'/release-review.json','utf8'));
+  const config=JSON.parse(fs.readFileSync(dir+'/wrangler.reviewed.json','utf8'));
+  const inputs=Buffer.concat([fs.readFileSync(config.main),Buffer.from([0]),fs.readFileSync(dir+'/worker.original.mjs'),Buffer.from([0]),fs.readFileSync('cloudflare/ling-background-addon.js')]);
+  validateRelease(config,review,inputs,fs.readFileSync(dir+'/production-chat-backup.json'),{name:process.env.LING_WORKER_NAME,databaseName:process.env.LING_D1_DATABASE_NAME,databaseId:process.env.LING_D1_DATABASE_ID});
+  fs.writeFileSync('wrangler.generated.json',JSON.stringify(config,null,2),{flag:'wx'});
+  console.log('Reviewed configuration copied without discarding existing settings. No remote deployment.');
+}

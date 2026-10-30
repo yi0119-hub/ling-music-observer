@@ -1,3 +1,5 @@
+> 目前狀態與正式上線限制以 [RELEASE-READINESS.md](RELEASE-READINESS.md) 為準；以下包含早期階段紀錄。
+
 # Spotify 背景查詢：獨立測試版
 
 部署紀錄：測試程式版本 `7d90afa7` 已啟用；Dashboard 已儲存並顯示 `Every 10 minutes` 的 Cron（僅此測試 Worker）。帳戶持有人已確認新增 Redirect URI。Spotify 帳號仍需由本人在頁面完成授權與啟用，這兩個動作不能由部署紀錄代替。
@@ -29,7 +31,7 @@
 
 ## 驗證
 
-42 項測試通過，新增 PKCE challenge/最小 scope、缺少同意不啟動、state/期限/回呼來源驗證、授權與啟用分開、token 不持久保存、沿用既有每日問候偏好及限定排程派送等測試。
+46 項測試通過，新增 PKCE challenge/最小 scope、缺少同意不啟動、state/期限/回呼來源驗證、授權與啟用分開、token 不持久保存、沿用既有每日問候偏好及限定排程派送等測試。
 
 測試包 SHA-256：`e1f15676cbb5c0e93b78e3d797d1a8e72785e100da55a530f70c4e5e4f0d2f28`。測試頁預填本人提供的公開 Client ID，不包含 Client Secret。
 

@@ -30,6 +30,35 @@ function fixture(t){
 }
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
 
+test('two-minute polling establishes baseline, pushes changes, respects cooldown and quiet hours',async t=>{
+  const {sqlite,env,call,enable}=fixture(t);env.LING_SPOTIFY_POLL_MINUTES='2';
+  const RealDate=globalThis.Date;let now=RealDate.parse('2026-10-30T04:00:00Z');
+  globalThis.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}};
+  t.after(()=>{globalThis.Date=RealDate;});
+  await enable();await call('bg_vapid');await call('bg_config',{songPush:true,daily:false});
+  const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+  await call('bg_subscribe',{subscription:{endpoint:'https://web.push.apple.com/local-test',keys:{
+    p256dh:Buffer.from(await crypto.subtle.exportKey('raw',pair.publicKey)).toString('base64url'),auth:Buffer.alloc(16,7).toString('base64url')
+  }}});
+  let track='baseline',pushes=0,spotifyCalls=0;
+  globalThis.fetch=async(url,options)=>{
+    assert.equal(options.redirect,'manual');
+    if(String(url).startsWith('https://web.push.apple.com/')){pushes++;return new Response(null,{status:201});}
+    spotifyCalls++;
+    return String(url).includes('/api/token')?Response.json({access_token:'local-test'}):Response.json({is_playing:true,item:{type:'track',id:track,name:'must-not-be-stored'}});
+  };
+  await runLingBackground('*/10 * * * *',env);assert.equal(spotifyCalls,0);
+  const poll=()=>runLingBackground('*/2 * * * *',env);
+  await poll();assert.equal(pushes,0);
+  now+=120000;track='changed';await poll();assert.equal(pushes,1);
+  now+=120000;track='cooldown';await poll();assert.equal(pushes,1);
+  now+=16*60000;track='after-cooldown';await poll();assert.equal(pushes,2);
+  now=RealDate.parse('2026-10-30T15:30:00Z');track='quiet-hours';await poll();assert.equal(pushes,2);
+  const status=await(await call('bg_status')).json();assert.equal(status.pollMinutes,2);assert.equal(status.spotifyResult,'playing');
+  assert.equal(sqlite.prepare("SELECT count(*) AS n FROM ling_v4_settings WHERE value LIKE '%must-not-be-stored%'").get().n,0);
+  await call('bg_disable_spotify');const before=spotifyCalls;await poll();assert.equal(spotifyCalls,before);
+});
+
 for(const stage of ['refresh','player'])test(`disable while ${stage} response is pending never recreates Spotify data`,async t=>{
   const {sqlite,env,call,enable}=fixture(t);await enable();
   const entered=deferred(),resume=deferred();let calls=0;

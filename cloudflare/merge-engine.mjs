@@ -3,7 +3,9 @@
  * to Cloudflare. A dedicated /ling-bg route preserves every existing root
  * chat request unchanged.
  */
-export function mergeWorkerSource(source) {
+export function mergeWorkerSource(source,{pollMinutes=10,daily=true}={}) {
+  if(![2,10].includes(pollMinutes)||typeof daily!=='boolean')throw Error('Unsupported background schedule');
+  const crons=['*/'+pollMinutes+' * * * *',...(daily?['0 12 * * *']:[])];
   if (typeof source !== 'string' || source.length < 100) throw Error('No valid Worker source');
   if (source.includes('handleLingBackground') || source.includes('runLingBackground'))
     throw Error('Background code appears already installed');
@@ -29,13 +31,13 @@ export function mergeWorkerSource(source) {
     "        }});",
     '      }',
     "      if (request.method !== 'POST') return new Response(null, {status:405});",
-    '      return handleLingBackground(request, env);',
+    `      return handleLingBackground(request, {...env,LING_SPOTIFY_POLL_MINUTES:'${pollMinutes}'});`,
     '    }',
     '    return __lingOriginalWorker.fetch(request, env, ctx);',
     '  },',
     '  async scheduled(controller, env, ctx) {',
-    "    if (['*/10 * * * *', '0 12 * * *'].includes(controller.cron))",
-    '      ctx.waitUntil(runLingBackground(controller.cron, env));',
+    `    if (${JSON.stringify(crons)}.includes(controller.cron))`,
+    `      ctx.waitUntil(runLingBackground(controller.cron, {...env,LING_SPOTIFY_POLL_MINUTES:'${pollMinutes}'}));`,
     "    if (typeof __lingOriginalWorker.scheduled === 'function')",
     '      return __lingOriginalWorker.scheduled(controller, env, ctx);',
     '  }',
