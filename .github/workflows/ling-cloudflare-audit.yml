@@ -1,0 +1,63 @@
+name: Ling Cloudflare Worker - read-only audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Inspect live Worker without deploying
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read live Worker and bindings (do not publish source)
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_AUDIT_TOKEN: ${{ secrets.CLOUDFLARE_AUDIT_TOKEN }}
+          CF_WORKER_NAME: still-sea-162cling-shared-core
+        run: |
+          node --input-type=module <<'JS'
+          import { createHash } from 'node:crypto';
+
+          const { CF_ACCOUNT_ID: account, CF_AUDIT_TOKEN: token, CF_WORKER_NAME: name } = process.env;
+          if (!/^[a-f0-9]{32}$/i.test(account || '') || !token) {
+            throw new Error('Missing GitHub Actions secrets: CLOUDFLARE_ACCOUNT_ID and/or CLOUDFLARE_AUDIT_TOKEN');
+          }
+          const root = 'https://api.cloudflare.com/client/v4/accounts/' + account + '/workers/scripts/' + encodeURIComponent(name);
+          async function read(url) {
+            const response = await fetch(url, {
+              headers: { Authorization: 'Bearer ' + token },
+              redirect: 'error'
+            });
+            if (!response.ok) throw new Error('Cloudflare read failed: HTTP ' + response.status);
+            return response;
+          }
+
+          // The source must NEVER be logged, uploaded as an artifact or committed to a public repo.
+          const code = Buffer.from(await (await read(root + '/content/v2')).arrayBuffer());
+          if (!code.length) throw new Error('Cloudflare returned an empty Worker script.');
+          const fingerprint = createHash('sha256').update(code).digest('hex');
+          const body = code.toString('utf8');
+          const checks = {
+            responsesApiPresent: body.includes('/v1/responses'),
+            chatHistoryPresent: body.includes('history'),
+            memoryTablePresent: body.includes('memories'),
+            conversationClearPresent: body.includes('ERASE_CONVERSATION'),
+            backgroundActionsPresent: body.includes('bg_test_push') && body.includes('bg_enable_spotify'),
+            cronHandlerPresent: /\bscheduled\s*\(/.test(body),
+          };
+          console.log('AUDIT ONLY - no live changes');
+          console.log('Worker source size (bytes):', code.length);
+          console.log('Worker source SHA-256:', fingerprint);
+          console.log('Worker feature indicators:', JSON.stringify(checks));
+          const settings = await (await read(root + '/settings')).json();
+          if (settings.success === false) throw new Error('Cloudflare refused to report Worker settings.');
+          const bindings = (settings.result?.bindings || []).map(item => ({
+            name: item.name, type: item.type
+          }));
+          // Never print binding values, tokens or secret content.
+          console.log('Worker binding names/types:', JSON.stringify(bindings));
+          console.log('Worker audit finished. Live Worker/D1/Secrets were NOT modified.');
+          JS
