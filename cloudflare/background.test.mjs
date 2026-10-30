@@ -57,6 +57,15 @@ function fakeD1({daily=false}={}){
           return null;
         },
         async run(){
+          if(sql.startsWith('INSERT INTO ling_v4_jobs'))return {meta:{changes:1}};
+          if(sql.startsWith('INSERT INTO ling_v4_settings(key,value) SELECT')){
+            if(state.get('spotify_token')!==args[2]||state.get('spotify_enabled')!=='yes')return {meta:{changes:0}};
+            state.set(args[0],args[1]);return {meta:{changes:1}};
+          }
+          if(sql.startsWith("DELETE FROM ling_v4_settings WHERE key IN ('spotify_enabled','spotify_token')")){
+            if(state.get('spotify_token')!==args[0])return {meta:{changes:0}};
+            state.delete('spotify_enabled');state.delete('spotify_token');return {meta:{changes:2}};
+          }
           if(sql.includes('INSERT OR IGNORE INTO ling_v4_settings')){
             if(!state.has(args[0]))state.set(args[0],args[1]);
             return {meta:{changes:1}};
@@ -164,7 +173,7 @@ test('expired Spotify grant disables polling and removes stored refresh token',a
   await runLingBackground('*/10 * * * *',env);
   await runLingBackground('*/10 * * * *',env);
   assert.equal(calls,1);
-  assert.equal(state.get('spotify_enabled'),'no');
+  assert.equal(state.has('spotify_enabled'),false);
   assert.equal(state.has('spotify_token'),false);
 });
 

@@ -35,6 +35,7 @@ async function init(db){
   await db.batch([
     db.prepare('CREATE TABLE IF NOT EXISTS ling_v4_settings (key TEXT PRIMARY KEY,value TEXT NOT NULL)'),
     db.prepare('CREATE TABLE IF NOT EXISTS ling_v4_push (endpoint TEXT PRIMARY KEY,p256dh TEXT NOT NULL,auth TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)'),
+    db.prepare('CREATE TABLE IF NOT EXISTS ling_v4_jobs (name TEXT PRIMARY KEY,owner TEXT NOT NULL,expires_at INTEGER NOT NULL)'),
     db.prepare('CREATE TABLE IF NOT EXISTS ling_v4_dispatch (name TEXT PRIMARY KEY,last_date TEXT NOT NULL)')
   ]);
 }
@@ -92,7 +93,7 @@ async function sendAll(db,env,data){
   const subs=(await db.prepare('SELECT endpoint,p256dh,auth FROM ling_v4_push LIMIT 12').all()).results||[];
   const privateKey=JSON.parse(await unseal(env,bundle.sealedPrivateKey));
   let accepted=0;
-  for(const sub of subs){
+  await Promise.all(subs.map(async sub=>{
     try{
       const endpoint=securePushUrl(sub.endpoint);
       const jwt=await vapidJwt(privateKey,endpoint.origin);
@@ -100,11 +101,11 @@ async function sendAll(db,env,data){
       const res=await fetch(endpoint.href,{method:'POST',headers:{
         Authorization:'vapid t='+jwt+', k='+pub,
         'Content-Encoding':'aes128gcm','Content-Type':'application/octet-stream','TTL':'3600'
-      },body,redirect:'error'});
+      },body,redirect:'error',signal:AbortSignal.timeout(10000)});
       if(res.ok)accepted++;
       if(res.status===404||res.status===410)await db.prepare('DELETE FROM ling_v4_push WHERE endpoint=?').bind(sub.endpoint).run();
     }catch(error){console.warn('Web Push send failure',String(error).slice(0,70));}
-  }
+  }));
   return {accepted,total:subs.length};
 }
 function taipei(){
@@ -118,33 +119,46 @@ function retryAt(response){
 async function songCheck(db,env){
   if(await get(db,'spotify_enabled')!=='yes')return;
   if(Date.now()<Number(await get(db,'spotify_backoff_until')||0))return;
-  const crypt=await get(db,'spotify_token'),clientId=await get(db,'spotify_client');
+  let crypt=await get(db,'spotify_token');
+  const clientId=await get(db,'spotify_client');
   if(!crypt||!clientId)return;
+  // Every write checks the encrypted credential snapshot atomically. An older
+  // request cannot recreate data after disable or overwrite a new authorization.
+  const active=async()=>await get(db,'spotify_token')===crypt&&await get(db,'spotify_enabled')==='yes';
+  const save=async(k,v)=>db.prepare("INSERT INTO ling_v4_settings(key,value) SELECT ?,? WHERE EXISTS(SELECT 1 FROM ling_v4_settings WHERE key='spotify_token' AND value=?) AND EXISTS(SELECT 1 FROM ling_v4_settings WHERE key='spotify_enabled' AND value='yes') ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(k,String(v),crypt).run();
   let refresh;try{refresh=await unseal(env,crypt);}catch{console.warn('Spotify token cannot decrypt');return;}
   const auth=await fetch('https://accounts.spotify.com/api/token',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:clientId})
+    body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:clientId}),
+    redirect:'error',signal:AbortSignal.timeout(10000)
   });
+  if(!await active())return;
   if(!auth.ok){
     if([400,401].includes(auth.status)){
-      await set(db,'spotify_enabled','no');
-      await del(db,'spotify_token');
+      const removed=await db.prepare("DELETE FROM ling_v4_settings WHERE key IN ('spotify_enabled','spotify_token') AND EXISTS(SELECT 1 FROM ling_v4_settings WHERE key='spotify_token' AND value=?)").bind(crypt).run();
+      if(!removed.meta?.changes)return;
       await sendAll(db,env,{title:'玲的音樂觀察室',body:'Spotify 背景授權已失效，請重新授權。',tag:'ling-auth'});
-    }else if(auth.status===429)await set(db,'spotify_backoff_until',retryAt(auth));
+    }else if(auth.status===429)await save('spotify_backoff_until',retryAt(auth));
     return;
   }
   const token=await auth.json();
-  if(token.refresh_token&&token.refresh_token!==refresh)await set(db,'spotify_token',await seal(env,token.refresh_token));
+  if(token.refresh_token&&token.refresh_token!==refresh){
+    const rotated=await seal(env,token.refresh_token);
+    if(!(await save('spotify_token',rotated)).meta?.changes)return;
+    crypt=rotated;
+  }
   if(!token.access_token)return;
-  const res=await fetch('https://api.spotify.com/v1/me/player/currently-playing',{headers:{Authorization:'Bearer '+token.access_token}});
+  if(!await active())return;
+  const res=await fetch('https://api.spotify.com/v1/me/player/currently-playing',{headers:{Authorization:'Bearer '+token.access_token},redirect:'error',signal:AbortSignal.timeout(10000)});
+  if(!await active())return;
   if(res.status===204)return;
   if(res.status===429){
     let reason='';try{reason=(await res.json()).error?.reason||'';}catch{}
     if(reason==='QUOTA_EXCEEDED'){
-      await set(db,'spotify_enabled','no');
+      if(!(await save('spotify_enabled','no')).meta?.changes)return;
       await sendAll(db,env,{title:'玲的音樂觀察室',body:'Spotify 配額受限，已暫停背景偵測。',tag:'ling-quota'});
     }else {
-      await set(db,'spotify_backoff_until',retryAt(res));
+      await save('spotify_backoff_until',retryAt(res));
     }
     return;
   }
@@ -154,11 +168,12 @@ async function songCheck(db,env){
   const hash=b64(await dig('ling-v4-last-track:'+result.item.id));
   const prev=await get(db,'spotify_last');
   if(prev===hash)return;
-  await set(db,'spotify_last',hash);
+  if(!(await save('spotify_last',hash)).meta?.changes)return;
   if(!prev||await get(db,'push_song')!=='yes')return;
   const last=Number(await get(db,'spotify_last_push')||0),now=Date.now(),hour=taipei().hour;
   if(hour<9||hour>=23||now-last<15*60000)return;
-  await set(db,'spotify_last_push',now);
+  if(!(await save('spotify_last_push',now)).meta?.changes)return;
+  if(!await active())return;
   await sendAll(db,env,{title:'玲的音樂觀察室',body:'播放狀態有變化了，打開觀察室看看吧。',tag:'ling-song'});
 }
 async function dailyCheck(db,env){
@@ -249,9 +264,16 @@ export async function handleLingBackground(request,env){
   }catch(e){console.warn('Background action error:',String(e).slice(0,90));return reply({error:'背景功能暫時不可用，請檢查設定或 Worker Logs'},503);}
 }
 export async function runLingBackground(cron,env){
-  if(!env.DB||!env.LING_ACCESS_CODE)return;
+  if(!env.DB||typeof env.LING_ACCESS_CODE!=='string'||env.LING_ACCESS_CODE.length<32)return;
+  if(!['*/10 * * * *','0 12 * * *'].includes(cron))return;
   await init(env.DB);
-  if(cron==='*/10 * * * *')await songCheck(env.DB,env);
+  if(cron==='*/10 * * * *'){
+    const owner=crypto.randomUUID(),now=Date.now();
+    const lock=await env.DB.prepare('INSERT INTO ling_v4_jobs(name,owner,expires_at) VALUES(?,?,?) ON CONFLICT(name) DO UPDATE SET owner=excluded.owner,expires_at=excluded.expires_at WHERE expires_at<=?').bind('spotify',owner,now+90000,now).run();
+    if(!lock.meta?.changes)return;
+    try{await songCheck(env.DB,env);}
+    finally{await env.DB.prepare('DELETE FROM ling_v4_jobs WHERE name=? AND owner=?').bind('spotify',owner).run();}
+  }
   if(cron==='0 12 * * *')await dailyCheck(env.DB,env);
 }
 

@@ -39,6 +39,9 @@ jobs:
           node --check cloudflare/merge-engine.mjs
           node --test cloudflare/merge-engine.test.mjs
           node --test cloudflare/background.test.mjs
+          node --test cloudflare/concurrency.test.mjs
+          node --test cloudflare/frontend.test.mjs
+          node --test cloudflare/merge-offline.test.mjs
       - name: Verify v5 and background integration
         run: node cloudflare/verify.mjs
 
@@ -74,3 +77,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config wrangler.generated.json --keep-vars
+

@@ -7,6 +7,8 @@ import {mergeWorkerSource} from './merge-engine.mjs';
 
 const original = [
   '// Original chat Worker: leave all existing handlers and bindings intact.',
+  "const __lingOriginalWorker = 'module-local-name';",
+  "export const preservedExport = __lingOriginalWorker;",
   'export default {',
   "  marker: 'original',",
   "  queue(){return this.marker;},",
@@ -29,7 +31,10 @@ test('existing chat remains unchanged, background uses only a separate API path'
   const dir=await mkdtemp(join(dirname(fileURLToPath(import.meta.url)),'.merge-test-'));
   t.after(async()=>rm(dir,{recursive:true,force:true}));
   await writeFile(join(dir,'worker.mjs'),mergeWorkerSource(original));
-  const worker=(await import(pathToFileURL(join(dir,'worker.mjs')).href)).default;
+  await writeFile(join(dir,'worker.original.mjs'),original);
+  const module=await import(pathToFileURL(join(dir,'worker.mjs')).href);
+  const worker=module.default;
+  assert.equal(module.preservedExport,'module-local-name');
   assert.equal(worker.queue(),'original');
   globalThis.__lingMockChatHits=0;
   const root='https://example.workers.dev';

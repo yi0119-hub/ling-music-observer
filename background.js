@@ -4,9 +4,19 @@
   const $=id=>document.getElementById(id);
   const msg=$('bgMessage');
   const setMessage=value=>{msg.textContent=value;};
-  const btn=($id,callback)=>$($id).addEventListener('click',()=>{
-    Promise.resolve(callback()).catch(error=>setMessage('設定未完成：'+error.message));
-  });
+  let busy=false;
+  const controls=[];
+  const btn=($id,callback)=>{
+    const control=$($id);controls.push(control);
+    control.addEventListener('click',()=>{
+      if(busy)return;
+      busy=true;controls.forEach(x=>{x.disabled=true;});
+      // Call synchronously so iPhone notification permission retains the click.
+      let result;try{result=callback();}catch(error){result=Promise.reject(error);}
+      Promise.resolve(result).catch(error=>setMessage('設定未完成：'+error.message))
+        .finally(()=>{busy=false;controls.forEach(x=>{x.disabled=false;});});
+    });
+  };
   function endpoint(){
     const raw=$('chatEndpoint').value.trim();
     const u=new URL(raw);
@@ -18,7 +28,7 @@
     const secret=$('chatPasscode').value;
     if(secret.length<32)throw Error('請先輸入玲的共用通行碼，或啟用「記住這台裝置」。');
     const response=await fetch(endpoint()+'ling-bg',{
-      method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Ling-Access-Code':secret},
+      method:'POST',cache:'no-store',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json','X-Ling-Access-Code':secret},
       body:JSON.stringify({action,...options})
     });
     const data=await response.json().catch(()=>({}));
@@ -38,7 +48,11 @@
     if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))
       throw Error('此瀏覽環境不支援 Web Push。iPhone 請先加入主畫面，從圖示開啟。');
     const registration=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
-    return navigator.serviceWorker.ready || registration;
+    let timer;
+    try{
+      return await Promise.race([navigator.serviceWorker.ready || registration,
+        new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('通知服務啟動逾時，請重新開啟主畫面 App 後再試。')),15000);})]);
+    }finally{clearTimeout(timer);}
   }
   btn('bgSubscribe',async()=>{
     // Initiate permission immediately inside a click, before awaiting network calls.
@@ -53,11 +67,11 @@
     if(current && !sameKey(current.options.applicationServerKey,encodeKey(publicKey))){await current.unsubscribe();}
     const subscription=await registration.pushManager.getSubscription() || await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:encodeKey(publicKey)});
     await call('bg_subscribe',{subscription:subscription.toJSON()});
-    setMessage('這台 iPhone 的推播已啟用。你可以按「測試通知」確認。');
     await refreshStatus();
+    setMessage('此裝置已登記推播。請按「測試通知」，確認手機實際收到通知。');
   });
   function sameKey(a,b){if(!a)return false;const x=new Uint8Array(a);return x.length===b.length&&x.every((v,i)=>v===b[i]);}
-  btn('bgTest',async()=>{await call('bg_test_push');setMessage('已送出測試通知，請查看 iPhone 通知。');});
+  btn('bgTest',async()=>{await call('bg_test_push');setMessage('推播服務已接受測試通知，請查看手機是否收到。');});
   btn('bgSavePref',async()=>{
     await call('bg_config',{daily:$('bgDaily').checked,songPush:$('bgSongPush').checked});
     setMessage('推播偏好已保存：每日招呼約 20:00，歌曲變化最多每 15 分鐘提醒一次。');
@@ -68,21 +82,22 @@
     const clientId=$('clientId').value.trim()||localStorage.getItem('lingmusic-v1-client-id');
     if(!refreshToken||!clientId)throw Error('請先在下方 Spotify 區塊完成登入（或重新授權）再啟用。');
     await call('bg_enable_spotify',{clientId,refreshToken});
-    setMessage('已啟用雲端 Spotify 查詢。授權憑證會加密保存在 D1；不儲存播放歷史。');
     await refreshStatus();
+    setMessage('已啟用雲端 Spotify 查詢。授權憑證會加密保存在 D1；不儲存播放歷史。');
   });
   btn('bgDisableSpotify',async()=>{
     await call('bg_disable_spotify');
     $('bgConsent').checked=false;
-    setMessage('已關閉雲端 Spotify 查詢並刪除伺服器保存的 Spotify 更新授權。');
     await refreshStatus();
+    setMessage('已關閉雲端 Spotify 查詢並刪除伺服器保存的 Spotify 更新授權。');
   });
   btn('bgUnsubscribe',async()=>{
     const registration=await registerServiceWorker();
     const subscription=await registration.pushManager.getSubscription();
     if(subscription){await call('bg_unsubscribe',{endpoint:subscription.endpoint});await subscription.unsubscribe();}
-    setMessage('已取消此裝置的推播訂閱。');
     await refreshStatus();
+    setMessage('已取消此裝置的推播訂閱。');
   });
   btn('bgStatus',refreshStatus);
 })();
+

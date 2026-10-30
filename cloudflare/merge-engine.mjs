@@ -9,10 +9,10 @@ export function mergeWorkerSource(source) {
     throw Error('Background code appears already installed');
   if ((source.match(/export\s+default\s*\{/g) || []).length !== 1)
     throw Error('Unknown Worker entry point: review by hand before integration');
-  const original = source.replace(/export\s+default\s*\{/, 'const __lingOriginalWorker = {');
   const bgWrapper = [
     'export default {',
-    '  ...__lingOriginalWorker,',
+    '  ...Object.fromEntries(Object.entries(__lingOriginalWorker).map(([key,value]) =>',
+    "    [key,typeof value === 'function' ? value.bind(__lingOriginalWorker) : value])),",
     '  async fetch(request, env, ctx) {',
     '    const path = new URL(request.url).pathname;',
     "    if (path === '/ling-bg') {",
@@ -43,7 +43,9 @@ export function mergeWorkerSource(source) {
   ].join('\n');
   return [
     "import {handleLingBackground, runLingBackground} from '../ling-background-addon.js';",
-    original, bgWrapper
+    "import __lingOriginalWorker from './worker.original.mjs';",
+    "export * from './worker.original.mjs';",
+    bgWrapper
   ].join('\n\n');
 }
 
