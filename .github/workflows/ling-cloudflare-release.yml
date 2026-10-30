@@ -34,6 +34,8 @@ jobs:
           node --check background.js
           node --check sw.js
           node --check ui.js
+          node --check cloudflare/ling-background-addon.js
+          node --check cloudflare/merge-live.mjs
       - name: Verify v5 and background integration
         run: node cloudflare/verify.mjs
 
