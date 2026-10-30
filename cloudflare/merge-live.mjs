@@ -34,6 +34,7 @@ const wrapper=[
   'export default {',
   '  async fetch(request,env,ctx){',
   "    if(request.method==='POST'&&new URL(request.url).pathname==='/'){",
+  '      if(Number(request.headers.get("Content-Length")||0)>4200)return __lingOriginalWorker.fetch(request,env,ctx);',
   '      const copy=request.clone();',
   '      const body=await copy.text();',
   '      if(body.length<=4200){',
@@ -56,7 +57,7 @@ const wrapper=[
   '};'
 ].join('\n');
 const combined=[
-  "import {handleLingBackground,runLingBackground} from './ling-background-addon.js';",
+  "import {handleLingBackground,runLingBackground} from '../ling-background-addon.js';",
   patched,wrapper
 ].join('\n');
 const dir='cloudflare/.generated';
