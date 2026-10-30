@@ -17,7 +17,7 @@
 
 ## 排程與提醒
 
-- 測試 Worker 專用 Cron：`*/10 * * * *`。僅處理這個排程，不啟用每日問候。
+- 測試 Worker 專用 Cron：`*/2 * * * *`。僅處理這個排程，不啟用每日問候。
 - 未授權或已關閉時，排程不會發出 Spotify 請求。
 - 首次有效歌曲查詢建立基準，不發提醒；之後歌曲指紋變化才發送。
 - 09:00–23:00（Asia/Taipei）可發歌曲變化提醒，最多每十五分鐘一次。
@@ -36,3 +36,6 @@
 仍需本人完成 Spotify 開發者設定與帳號授權；不得將測試頁已部署或 Cron 已設定，宣稱為真實 Spotify 播放查詢已通過。
 
 參考：[Spotify PKCE](https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow)、[Redirect URI](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri)、[Cloudflare Cron](https://developers.cloudflare.com/workers/configuration/cron-triggers/)。
+
+
+2026-10-30：獨立測試室改為每 2 分鐘查詢，每天最多 720 次。歌曲通知仍維持 15 分鐘間隔與台北 23:00–09:00 安靜時段。共用模組預設保留 10 分鐘，只有測試室覆寫為 2 分鐘，正式環境不變。使用者已回報 Spotify 背景功能啟用成功。

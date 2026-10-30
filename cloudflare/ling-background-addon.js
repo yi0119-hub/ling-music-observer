@@ -3,6 +3,7 @@
  * No Spotify metadata forwarded to AI; no playback history saved.
  * Worker D1 binding: DB. Secret: LING_ACCESS_CODE (32+ random characters).
  */
+const spotifyPollMinutes = env => env.LING_SPOTIFY_POLL_MINUTES === '2' ? 2 : 10;
 const HOME = 'https://yi0119-hub.github.io/ling-music-observer/';
 const enc = new TextEncoder(), dec = new TextDecoder();
 const bytes = x => typeof x === 'string' ? enc.encode(x) : x;
@@ -225,7 +226,7 @@ export async function handleLingBackground(request,env){
     if(action==='bg_status'){
       const n=(await db.prepare('SELECT count(*) AS n FROM ling_v4_push').first())?.n||0;
       return reply({ok:true,pushSubscriptions:Number(n),songEnabled:await get(db,'spotify_enabled')==='yes',
-        songPush:await get(db,'push_song')==='yes',dailyPush:await get(db,'push_daily')==='yes',pollMinutes:10,
+        songPush:await get(db,'push_song')==='yes',dailyPush:await get(db,'push_daily')==='yes',pollMinutes:spotifyPollMinutes(env),
         lastSpotifyCheck:Number(await get(db,'spotify_last_check')||0),spotifyResult:await get(db,'spotify_result'),
         spotifyBackoffUntil:Number(await get(db,'spotify_backoff_until')||0)});
     }
@@ -278,9 +279,10 @@ export async function handleLingBackground(request,env){
 }
 export async function runLingBackground(cron,env){
   if(!env.DB||typeof env.LING_ACCESS_CODE!=='string'||env.LING_ACCESS_CODE.length<32)return;
-  if(!['*/10 * * * *','0 12 * * *'].includes(cron))return;
+  const spotifyCron='*/'+spotifyPollMinutes(env)+' * * * *';
+  if(![spotifyCron,'0 12 * * *'].includes(cron))return;
   await init(env.DB);
-  if(cron==='*/10 * * * *'){
+  if(cron===spotifyCron){
     const owner=crypto.randomUUID(),now=Date.now();
     const lock=await env.DB.prepare('INSERT INTO ling_v4_jobs(name,owner,expires_at) VALUES(?,?,?) ON CONFLICT(name) DO UPDATE SET owner=excluded.owner,expires_at=excluded.expires_at WHERE expires_at<=?').bind('spotify',owner,now+90000,now).run();
     if(!lock.meta?.changes)return;

@@ -32,9 +32,10 @@ test('staging page and single-file bundle have valid script syntax',async()=>{
   assert.equal(typeof (await import('data:text/javascript;base64,'+Buffer.from(bundle).toString('base64'))).default.fetch,'function');
 });
 
-test('staging schedule only dispatches the approved ten-minute Spotify job',async()=>{
+test('staging schedule only dispatches the approved two-minute Spotify job',async()=>{
   const pending=[];const ctx={waitUntil(promise){pending.push(promise);}};
   await worker.scheduled({cron:'0 12 * * *'},{},ctx);assert.equal(pending.length,0);
-  await worker.scheduled({cron:'*/10 * * * *'},{},ctx);assert.equal(pending.length,1);
+  await worker.scheduled({cron:'*/10 * * * *'},{},ctx);assert.equal(pending.length,0);
+  await worker.scheduled({cron:'*/2 * * * *'},{},ctx);assert.equal(pending.length,1);
   await Promise.all(pending);
 });

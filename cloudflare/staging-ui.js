@@ -32,7 +32,7 @@
     const checked=data.lastSpotifyCheck?new Date(data.lastSpotifyCheck).toLocaleString('zh-TW'):'尚未查詢';
     const labels={checking:'查詢中',playing:'已取得播放狀態',idle:'目前未播放歌曲',rate_limited:'Spotify 限流，等待後重試',reauthorize:'需要重新授權'};
     el('spotifyCheck').textContent='上次查詢：'+checked+'；結果：'+(labels[data.spotifyResult]||data.spotifyResult||'等待授權或排程');
-    show('測試 D1 連線正常，已登記 '+data.pushSubscriptions+' 個裝置。'+(data.songEnabled?'每 10 分鐘查詢，歌曲變化提醒遵守安靜時段與 15 分鐘間隔。':'可在下方連接 Spotify 並啟用背景查詢。'));
+    show('測試 D1 連線正常，已登記 '+data.pushSubscriptions+' 個裝置。'+(data.songEnabled?'每 2 分鐘查詢，歌曲變化提醒遵守安靜時段與 15 分鐘間隔。':'可在下方連接 Spotify 並啟用背景查詢。'));
     return data;
   }
   action('status',status);
@@ -73,7 +73,7 @@
     grant=null;
     await call('bg_config',{daily:settings.dailyPush,songPush:true});
     await status();
-    show('背景 Spotify 已啟用，每 10 分鐘查詢一次。首次查詢建立基準，之後歌曲變化才會提醒；23:00–09:00 不提醒。');
+    show('背景 Spotify 已啟用，每 2 分鐘查詢一次。首次查詢建立基準，之後歌曲變化才會提醒；23:00–09:00 不提醒。');
   });
   action('spotifyDisable',async()=>{
     await call('bg_disable_spotify');grant=null;
